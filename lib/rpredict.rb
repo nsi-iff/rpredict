@@ -1,5 +1,6 @@
 require "rpredict/version"
 
-module Rpredict
-  # Your code goes here...
+module RPredict
+
+
 end
