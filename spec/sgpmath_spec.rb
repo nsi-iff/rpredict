@@ -3,8 +3,8 @@ require 'spec_helper'
 describe RPredict::SGPMath  do
 
   let(:value) { 10 }
-  let(:magv) {RPredict::SGPMath.vector_t(1,2,3)}
-  let(:vsca) {RPredict::SGPMath.vector_t(3,6,9)}
+  let(:magv) {RPredict::Norad.vector_t(1,2,3)}
+  let(:vsca) {RPredict::Norad.vector_t(3,6,9)}
 
   it 'vector_t test' do
     expect(magv.x).to eq 1

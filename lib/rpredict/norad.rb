@@ -1,5 +1,6 @@
 module RPredict
   module Norad
+    extend self
 
     # Flow control flag definitions
     SGP4_INITIALIZED_FLAG  =  0x000002
@@ -96,6 +97,52 @@ module RPredict
     aostime  =  0.0
 
     TXX =  (TWOPI/XMNPDA/XMNPDA)
+
+    def vector_t(x=0,y=0,z=0,w=0)
+      (Struct.new :x,:y,:z,:w).new x,y,z,w
+    end
+
+    def obs_set_t(az=0,el=0,range=0,range_rate=0)
+      (Struct.new :az,:el,:range,:range_rate).new az,el,range,range_rate
+    end
+
+    def obs_astro_t(ra=0,dec=0)
+      (Struct.new :ra,:dec).new ra,dec
+    end
+
+    def deep_arg_t()
+
+      #Used by dpinit part of Deep()
+      # eosq, sinio, cosio, betao, aodp, theta2,
+      # sing, cosg, betao2, xmdot, omgdot, xnodot, xnodp
+
+      # Used by dpsec and dpper parts of Deep() */
+      # xll, omgadf, xnode, em, xinc, xn, t
+
+      #  Used by thetg and Deep() */
+      #  ds50
+
+      (Struct.new :eosq, :sinio, :cosio, :betao, :aodp, :theta2,
+                  :sing, :cosg, :betao2, :xmdot, :omgdot, :xnodot, :xnodp,
+                  :xll, :omgadf, :xnode, :em, :xinc, :xn, :t, :ds50).new(0,0,0,
+                  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+
+    end
+
+    def deep_static_t()
+
+        (Struct.new :thgr,:xnq,:xqncl,:omegaq,:zmol,:zmos,:savtsn,:ee2,:e3,:xi2,
+                    :xl2,:xl3,:xl4,:xgh2,:xgh3,:xgh4,:xh2,:xh3,:sse,:ssi,:ssg,:xi3,
+                    :se2,:si2,:sl2,:sgh2,:sh2,:se3,:si3,:sl3,:sgh3,:sh3,:sl4,:sgh4,
+                    :ssl,:ssh,:d3210,:d3222,:d4410,:d4422,:d5220,:d5232,:d5421,
+                    :d5433,:del1,:del2,:del3,:fasx2,:fasx4,:fasx6,:xlamo,:xfact,
+                    :xni,:atime,:stepp,:stepn,:step2,:preep,:pl,:sghs,:xli,
+                    :d2201,:d2211,:sghl,:sh1,:pinc,:pe,:shs,:zsingl,:zcosgl,
+                    :zsinhl,:zcoshl,:zsinil,:zcosil).new(0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+      end
 
 
 

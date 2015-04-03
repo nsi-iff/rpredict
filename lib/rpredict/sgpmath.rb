@@ -5,9 +5,6 @@ module RPredict
     extend self
     include Math
 
-    def vector_t(x=0,y=0,z=0,w=0)
-      (Struct.new :x,:y,:z,:w).new x,y,z,w
-    end
 
     def vector_sub(v1, v2)
 
@@ -90,7 +87,7 @@ module RPredict
     end
 
     def scalar_Multiply(k, v1)
-      v2 = vector_t()
+      v2 = RPredict::Norad.vector_t()
       v2.x = k * v1.x
       v2.y = k * v1.y
       v2.z = k * v1.z
