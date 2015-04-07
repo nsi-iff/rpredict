@@ -110,6 +110,14 @@ module RPredict
       (Struct.new :ra,:dec).new ra,dec
     end
 
+    def sgpsdp_static_t()
+      (Struct.new :aodp, :aycof, :c1, :c4, :c5, :cosio, :d2, :d3, :d4, :delmo,
+                  :omgcof, :eta, :omgdot, :sinio, :xnodp, :sinmo, :t2cof, :t3cof,
+                  :t4cof, :t5cof, :x1mth2, :x3thm1, :x7thm1, :xmcof, :xmdot,
+                  :xnodcf, :xnodot, :xlcof).new(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                  0,0,0,0,0,0,0,0,0,0,0,0,0)
+    end
+
     def deep_arg_t()
 
       #Used by dpinit part of Deep()

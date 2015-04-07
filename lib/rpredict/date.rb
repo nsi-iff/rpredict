@@ -124,8 +124,13 @@ module RPredict
       gmst = 24110.54841 + tu * (8640184.812866 + tu * (0.093104 - tu * 6.2E-6))
       gmst = (gmst + SECDAY * omega_E * ut)%SECDAY
       ##LG thetaG = twopi * gmst / SECDAY
+
       deep_arg.ds50 = jd - 2433281.5 + ut
-      RPredict::SGPMath.fMod2p(6.3003880987 * deep_arg.ds50 + 1.72944494)
+
+      _thetaG = RPredict::SGPMath.fMod2p(6.3003880987 * deep_arg.ds50 + 1.72944494)
+
+      return  _thetaG,deep_arg
+
     end
 
   end

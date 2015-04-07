@@ -7,6 +7,9 @@ describe RPredict::Satellite  do
   let(:satellite) { RPredict::Satellite.new(name,line1,line2)}
   let(:elevation) {10.0}
   let(:azimuth) {10.0}
+  let(:sgps) { RPredict::Norad.sgpsdp_static_t()}
+  let(:dps) {RPredict::Norad.deep_static_t()}
+  let(:deep_arg) {RPredict::Norad.deep_arg_t()}
 =begin
   let(:ephemeris) {RPredict::Ephemeris.new(elevation,azimuth)}
 
@@ -16,6 +19,7 @@ describe RPredict::Satellite  do
      expect(satellite.ephemeris.azimuth).to eq azimuth
   end
 =end
+
   it 'get Satellite name from TLE' do
     expect(satellite.tle.name).to eq name
   end
