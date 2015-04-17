@@ -2,7 +2,8 @@ module RPredict
   module Satellite
     class Satellite
 
-      attr_accessor :tle, :ephemeris, :geodetic, :sgps, :dps, :deep_arg, :flags, :phase
+      attr_accessor :tle, :ephemeris, :geodetic, :sgps, :dps, :deep_arg,
+                    :flags, :phase, :position, :velocity, :meanmo
 
       def initialize(name,line1,line2)
         @tle        = RPredict::Satellite::TLE.new(name,line1,line2)
@@ -12,6 +13,8 @@ module RPredict
         @flags      = 0
         #@ephemeris = RPredict::Ephemeris.new
         @geodetic  = RPredict::Geodetic.new
+        @velocity  =  RPredict::Norad.vector_t()
+        @position  =  RPredict::Norad.vector_t()
       end
 
       def catnum

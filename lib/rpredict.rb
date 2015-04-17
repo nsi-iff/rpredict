@@ -7,5 +7,6 @@ module RPredict
   autoload :TLE, 'rpredict/satellite'
   autoload :Norad, 'rpredict/norad'
   autoload :Geodetic , 'rpredict/geodetic'
+  autoload :SGPSDP  , 'rpredict/sgp4sdp4'
 
 end

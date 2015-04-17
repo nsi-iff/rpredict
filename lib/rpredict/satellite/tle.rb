@@ -4,36 +4,35 @@ module RPredict
 
       attr_accessor :name, :line1, :line2,:epoch, :xndt2o, :xndd6o, :xbstar,
                     :xincl, :xnodeo, :eo, :omegao, :xmo, :xno, :catnr, :elset,
-                    :revnum
+                    :revnum, :bstar, :omegao1, :xincl1, :xnodeo1
 
 
       def initialize(name,line1,line2)
         @name = name   #sat_name
         @line1 = line1
         @line2 = line2
+        @xnodeo = rightascensionascendingnode # f
+        @omegao = argumentperigge #
+        @xmo    = meananomaly #
+        @xincl  = incliniation # f
+
+        @xno    = meanmotion
+
         @xepoch = (1000.0 * epochyear) + epochday * 1 ##epoch
-        @eo = 1.0e-07 * eccentricity
-        @xndt2o = firstderivativmeanmotion * RPredict::Norad::TXX
-        @xndd6o = nddot6 * RPredict::Norad::TXX/RPredict::Norad::XMNPDA
-        @xbstar = bstar/RPredict::Norad::AE                    ##bstart
-        @xincl = RPredict::SGPMath.deg2rad(incliniation) #
-        @xnodeo = RPredict::SGPMath.deg2rad(rightascensionascendingnode)
-        @omegao = RPredict::SGPMath.deg2rad(argumentperigge) #
-        @xmo = RPredict::SGPMath.deg2rad(meananomaly) #
-        @xno = meanmotion*(RPredict::Norad::TXX)*RPredict::Norad::XMNPDA #
-        #@elset = 0
+        @xndt2o = firstderivativmeanmotion
+        @xndd6o = nddot6
+        @xbstar = bstar
+        @eo     =  eccentricity # * 1.0e-07
+        @revnum = revolutionnumberepoch
 
       end
 
       def bstar
         #bstardrag
-        (1.0e-5*line1[53...59].to_f)/(10.0**line1[59...61].to_f)
+        (line1[53...59].to_f/100000)*(10.0**line1[59...61].to_f)
       end
 
-      def nddot6
-        #tle.secondderivativemeanmotion
-        (1.0e-5*line1[44...50].to_f)/(10.0**line1[50...52].to_f)
-      end
+
 
       #----   Line 1  --------------
       # satnum Satellite - d --- catnr
@@ -69,7 +68,7 @@ module RPredict
 
       # epochyr Satellite - d - s
       def epochyear
-          @line1[18...20].to_i
+          2000 + @line1[18...20].to_i
       end
 
       # epochdays Satellite - f -s
@@ -84,12 +83,17 @@ module RPredict
 
       # nddot Satellite - f -s
       def secondderivativemeanmotion
-          ((@line1[44...50]).to_f/100000.0) * (10.0**(@line1[50...52]).to_i)
+          (@line1[44...50].to_f/100000.0) * (10.0**@line1[50...52].to_i)
+      end
+
+      def nddot6
+        secondderivativemeanmotion
+
       end
 
       # bstar Satellite - f -s
       def bstardrag
-          ((@line1[53...59]).to_f/100000.0) * (10.0**(@line1[59...61]).to_i)
+          bstar
       end
 
       # ibexep Satellite - d - n

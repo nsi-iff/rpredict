@@ -2,6 +2,8 @@ module RPredict
   module Norad
     extend self
 
+    #attr_reader :SGP4_INITIALIZED_FLAG
+
     # Flow control flag definitions
     SGP4_INITIALIZED_FLAG  =  0x000002
     SDP4_INITIALIZED_FLAG  =  0x000004
@@ -21,8 +23,6 @@ module RPredict
 
 
     NEW_EPHEMERIS_FLAG     =  0x000100
-    DO_LOOP_FLAG           =  0x000200
-
 
     # Flow control flag definitions
     ALL_FLAGS              =  -1
@@ -34,21 +34,22 @@ module RPredict
     # Constants used by SGP4/SDP4 code
 
     TWOPI    = 2.0*Math::PI
-    PI2      = Math::PI/2
+    PIO2      = Math::PI/2
+    X3PIO2   = 3/PIO2
     E6A      = 1.0E-6
     XMNPDA   = 1.44E3
     AE       = 1.0
-    TOTHRD   = 6.6666666666666666E-1 # 2/3
+    TOTHRD   = 6.6666667E-1 # 2/3
     XJ3      = -2.53881E-6      # J3 Harmonic */
 
     XKE      = 7.43669161E-2
     CK2      = 5.413079E-4
     CK4      = 6.209887E-7
-    XKMPER   = 6.378137E3
+    XKMPER   = 6.378135E3
     F__      = 3.352779E-3
     S__      = 1.012229
     QOMS2T   = 1.880279E-09
-    OMEGA_E  = 1.00273790934
+    OMEGA_E  = 1.0027379
 
     ZNS      = 1.19459E-5
     C1SS     = 2.9864797E-6
@@ -93,7 +94,7 @@ module RPredict
 
     #Global variables for sharing data among functions...
 
-    flags    =  0
+    #flags    =  0
     aostime  =  0.0
 
     TXX =  (TWOPI/XMNPDA/XMNPDA)
@@ -150,10 +151,45 @@ module RPredict
                     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+    end
+
+    def select_ephemeris(satellite)
+
+      # Preprocess tle set
+
+      satellite.tle.xnodeo = RPredict::SGPMath.deg2rad(satellite.tle.xnodeo)
+      satellite.tle.omegao = RPredict::SGPMath.deg2rad(satellite.tle.omegao)
+      satellite.tle.xmo    = RPredict::SGPMath.deg2rad(satellite.tle.xmo)
+      satellite.tle.xincl  = RPredict::SGPMath.deg2rad(satellite.tle.xincl)
+
+      temp = TXX
+
+      # store mean motion beforersion
+      satellite.meanmo = satellite.tle.xno
+      satellite.tle.xno = satellite.tle.xno * temp * RPredict::Norad::XMNPDA
+      satellite.tle.xndt2o *= temp
+      satellite.tle.xndd6o = satellite.tle.xndd6o * temp / RPredict::Norad::XMNPDA
+      satellite.tle.bstar /= RPredict::Norad::AE
+
+      #Period > 225 minutes is deep space
+      dd1  =  (RPredict::Norad::XKE  / satellite.tle.xno)
+      a1   =  dd1**TOTHRD
+      r1   =  Math::cos(satellite.tle.xincl)
+      dd1  =  (1.0 - (satellite.tle.eo ** 2))
+      temp  =  CK2 * 1.5 * (r1 * r1 * 3.0 - 1.0) / (dd1**1.5)
+      del1  =  temp / (a1 * a1)
+      ao    =  a1 * (1.0 - del1 * (TOTHRD * 0.5 + del1 *
+             (del1 * 1.654320987654321 + 1.0)))
+
+      xnodp  =  satellite.tle.xno / ((temp / (ao * ao)) + 1.0)
+
+      if ((TWOPI / xnodp / XMNPDA) >=  0.15625)
+        satellite.flags |= DEEP_SPACE_EPHEM_FLAG
+      else
+        satellite.flags &= ~DEEP_SPACE_EPHEM_FLAG
       end
-
-
-
+      satellite
+    end
 
   end
 end

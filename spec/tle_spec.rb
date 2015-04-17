@@ -45,7 +45,7 @@ describe RPredict::Satellite::TLE  do
   end
 
   it 'epoch_year' do
-      expect(tle.epochyear).to eq "00".to_i
+      expect(tle.epochyear).to eq 2000
   end
 
   it 'epoch_days' do
@@ -77,20 +77,20 @@ describe RPredict::Satellite::TLE  do
   end
 
   it 'get xincl' do
-      expect(tle.xincl).to eq 0.5980929187319208
+      expect(tle.xincl).to eq 34.2682
   end
 
   it 'get omegao' do
-      expect(tle.omegao).to eq 5.790416027488514
+      expect(tle.omegao).to eq 331.7664
 
   end
 
   it 'get xmo' do
-      expect(tle.xmo).to eq 0.3373093125574321
+      expect(tle.xmo).to eq 19.3264
   end
 
   it 'get xno' do
-      expect(tle.xno).to eq 0.04722944544077856
+      expect(tle.xno).to eq 10.82419157
   end
 
   it 'right_ascension_ascendingnode' do
@@ -98,7 +98,7 @@ describe RPredict::Satellite::TLE  do
   end
 
   it 'get Xnodeo' do
-      expect(tle.xnodeo).to eq 6.08638547138321
+      expect(tle.xnodeo).to eq 348.7242
   end
 
   it 'eccentricity' do
@@ -106,7 +106,7 @@ describe RPredict::Satellite::TLE  do
   end
 
   it 'get eo' do
-      expect(tle.eo).to eq "0.1859667".to_f * 1.0e-07
+      expect(tle.eo).to eq "0.1859667".to_f #* 1.0e-07
   end
 
   it 'argument_perigge' do

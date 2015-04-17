@@ -8,7 +8,7 @@ module RPredict
 
     def vector_sub(v1, v2)
 
-      v3 = vector_t()
+      v3 = RPredict::Norad.vector_t()
       v3.x = v1.x - v2.x
       v3.y = v1.y - v2.y
       v3.z = v1.z - v2.z
@@ -24,7 +24,8 @@ module RPredict
 =end
 
     def magnitude(vector)
-      Vector.elements([vector.x,vector.y,vector.z,vector.w]).magnitude
+
+      Math::sqrt((vector.x**2) + (vector.y**2) + (vector.z**2))
     end
 
 
@@ -35,6 +36,10 @@ module RPredict
 
     def deg2rad(degrees=0.0)
       degrees * Math::PI / 180
+    end
+
+    def rad2deg(r)
+      (r/Math::PI)*180
     end
 
     def signal(value=0.0)
@@ -73,6 +78,29 @@ module RPredict
         Vector.elements(vector2).cross_product(vector1)
     end
 
+    def acTan( sinx,  cosx)
+
+      if(cosx == 0)
+        if(sinx > 0)
+            return (RPredict::Norad::PIO2);
+        else
+            return (RPredict::Norad::X3PIO2);
+        end
+      else
+        if(cosx > 0)
+          if(sinx > 0)
+             return ( Math::atan(sinx/cosx) );
+          else
+            return ( RPredict::Norad::TWOPI + Math::atan(sinx/cosx) );
+          end
+        else
+         return ( Math::PI + Math::atan(sinx/cosx) );
+        end
+      end
+    end
+
+
+
 
 
     def scale_Vector(k, v)
@@ -100,8 +128,10 @@ module RPredict
       # Converts the satellite's position and velocity
       # vectors from normalized values to km and km/sec */
       # ???????
-        return scale_Vector(RPredict::Norad.XKMPER, pos), \
-        scale_Vector(RPredict::Norad.XKMPER*RPredict::Norad::XMNPDA/RPredict::Norad::SECDAY, vel)
+        return scale_Vector(RPredict::Norad::XKMPER, pos),
+               scale_Vector(RPredict::Norad::XKMPER *
+                            RPredict::Norad::XMNPDA/
+                            RPredict::Norad::SECDAY, vel)
 
 
     end
@@ -138,12 +168,14 @@ anglevector
       # Returns mod 2PI of argument */
 
       ret_val=x
-      i=ret_val/twopi
-      ret_val-=i*twopi
+      i=(ret_val/RPredict::Norad::TWOPI).to_i
+
+      ret_val-=(i*RPredict::Norad::TWOPI)
 
       if (ret_val<0.0)
-        ret_val+=twopi
+        ret_val+=RPredict::Norad::TWOPI
       end
+
       ret_val
     end
 

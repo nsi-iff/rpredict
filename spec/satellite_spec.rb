@@ -45,7 +45,7 @@ describe RPredict::Satellite  do
   end
 
   it 'get year' do
-    expect(satellite.year).to eq "00".to_i
+    expect(satellite.year).to eq 2000
   end
 
   it 'get refepoch' do
@@ -61,7 +61,7 @@ describe RPredict::Satellite  do
   end
 
   it 'get eccn' do
-     expect(satellite.eccn).to eq (1.0e-7*"0.1859667".to_f)
+     expect(satellite.eccn).to eq 0.1859667
   end
 
   it 'get argper' do
@@ -86,5 +86,8 @@ describe RPredict::Satellite  do
     expect(satellite.orbitnum).to eq "41366".to_i
   end
 
+  it 'get flags' do
+    expect(satellite.flags).to eq 0
+  end
 
 end

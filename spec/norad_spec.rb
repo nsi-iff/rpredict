@@ -16,7 +16,7 @@ describe RPredict::Norad  do
   end
 
   it 'get Two PI' do
-    expect(RPredict::Norad::PI2).to eq 1.5707963267948966
+    expect(RPredict::Norad::PIO2).to eq 1.5707963267948966
   end
 
 

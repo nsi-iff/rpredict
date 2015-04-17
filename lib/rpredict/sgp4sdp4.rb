@@ -1,40 +1,38 @@
 module RPredict
   module SGPSDP
-    def SGP4(tsince, satellite)
+    extend self
+    def sgp4(satellite, tsince)
 
-      # This function is used to calculate the position and velocity
+      # This function is used to calculate the satellite.position and satellite.velocity
       # of near-earth (period < 225 minutes) satellites. tsince is
       # time since epoch in minutes, tle is a pointer to a tle_t
-      # structure with Keplerian orbital elements and pos and vel
-      # are vector_t structures returning ECI satellite position and
-      # velocity. Use Convert_Sat_State() to convert to km and km/s.
+      # structure with Keplerian orbital elements and satellite.pos and satellite.velocity
+      # are vector_t structures returning ECI satellite satellite.position and
+      # satellite.velocityocity. Use Convert_Sat_State() to convert to km and km/s.
 
       # Initialization
 
-      #Satellite position and velocity vectors
-      vel  =  RPredict::SGPMath.vector_t()
-      pos  =  RPredict::SGPMath.vector_t()
-
-      if (~satellite.flags & SGP4_INITIALIZED_FLAG)
-
-        satellite.flags |= SGP4_INITIALIZED_FLAG
+      #Satellite satellite.position and satellite.velocityocity vectors
 
 
+      if ((~satellite.flags) & RPredict::Norad::SGP4_INITIALIZED_FLAG) != 0
+
+        satellite.flags |= RPredict::Norad::SGP4_INITIALIZED_FLAG
 
         # Recover original mean motion (satellite.sgps.xnodp) and
         # semimajor axis (satellite.sgps.aodp) from input elements.
 
-        a1 = RPredict::SGPMath.pow(RPredict::Norad.XKE/satellite.tle.xno,RPredict::Norad.TOTHRD)
+        a1 = (RPredict::Norad::XKE/satellite.tle.xno)**RPredict::Norad::TOTHRD
         satellite.sgps.cosio = Math::cos(satellite.tle.xincl)
-        theta2 = satellite.sgps.cosio * satellite.sgps.cosio
-        satellite.sgps.satellite.sgps.x3thm1 = 3 * theta2-1.0
-        eosq = satellite.tle.eo * satellite.tle.eo
-        betao2 = 1.0 - eosq
+        theta2 = satellite.sgps.cosio ** 2
+        satellite.sgps.x3thm1 = 3 * theta2 - 1.0
+        eosq = satellite.tle.eo ** 2
+        betao2 = 1 - eosq
         betao = Math::sqrt(betao2)
-        del1 = 1.5 * RPredict::Norad.CK2 * satellite.sgps.satellite.sgps.x3thm1 / (a1 * a1 * betao * betao2)
-        ao = a1*(1.0-del1*(0.5*RPredict::Norad.TOTHRD+del1*(1.0+134.0/81.0*del1)))
-        delo = 1.5*RPredict::Norad.CK2*satellite.sgps.satellite.sgps.x3thm1/(ao*ao*betao*betao2)
-        satellite.sgps.satellite.sgps.xnodp = satellite.tle.xno/(1.0+delo)
+        del1 = 1.5 * RPredict::Norad::CK2 * satellite.sgps.x3thm1 / (a1 * a1 * betao * betao2)
+        ao = a1*(1.0-del1*(0.5*RPredict::Norad::TOTHRD+del1*(1.0+134.0/81.0*del1)))
+        delo = 1.5*RPredict::Norad::CK2*satellite.sgps.x3thm1/(ao*ao*betao*betao2)
+        satellite.sgps.xnodp = satellite.tle.xno/(1.0+delo)
         satellite.sgps.aodp = ao/(1.0-delo)
 
         # For perigee less than 220 kilometers, the "simple"
@@ -43,28 +41,31 @@ module RPredict
         # anomaly.  Also, the c3 term, the delta omega term, and
         # the delta m term are dropped.
 
-        if ((satellite.sgps.aodp*(1-satellite.tle.eo)/ae)<(220/RPredic::Norad.XKMPER+ae))
-            satellite.flags |= SIMPLE_FLAG
+
+        if ((satellite.sgps.aodp*(1.0-satellite.tle.eo)/RPredict::Norad::AE)<(220/
+             RPredict::Norad::XKMPER+RPredict::Norad::AE))
+            satellite.flags |= RPredict::Norad::SIMPLE_FLAG
         else
-            satellite.flags &= ~SIMPLE_FLAG
+            satellite.flags &= ~RPredict::Norad::SIMPLE_FLAG
         end
 
-        # For perigees below 156 km, the
-        # values of s and qoms2t are altered.
 
-        s4 = RPredict::Norad.S__
-        qoms24 = qoms2t
-        perigee = (satellite.sgps.aodp*(1-satellite.tle.eo)-ae)*RPredict::Norad.XKMPER
+        # For perigees below 156 km, the
+        # values of s and RPredict::Norad::QOMS2T are altered.
+
+        s4 = RPredict::Norad::S__
+        qoms24 = RPredict::Norad::QOMS2T
+        perigee = (satellite.sgps.aodp*(1-satellite.tle.eo)-
+                   RPredict::Norad::AE)*RPredict::Norad::XKMPER
 
         if (perigee<156.0)
-
           if (perigee <= 98.0)
               s4 = 20
           else
              s4 = perigee-78.0
           end
-          qoms24 = RPredict::SGPMath.pow((120-s4)*ae/RPredict::Norad.XKMPER,4)
-          s4 = s4/RPredict::Norad.XKMPER+ae
+          qoms24 = RPredict::SGPMath.pow((120-s4)*RPredict::Norad::AE/RPredict::Norad::XKMPER,4)
+          s4 = s4/RPredict::Norad::XKMPER+RPredict::Norad::AE
         end
 
         pinvsq = 1/((satellite.sgps.aodp**2)*(betao2**2))
@@ -72,72 +73,71 @@ module RPredict
         satellite.sgps.eta = satellite.sgps.aodp * satellite.tle.eo * tsi
         etasq  = satellite.sgps.eta**2
         eeta   = satellite.tle.eo * satellite.sgps.eta
-        psisq  = (1-etasq).abs
+        psisq  = (1.0-etasq).abs
         coef   = qoms24*RPredict::SGPMath.pow(tsi,4)
         coef1  = coef/RPredict::SGPMath.pow(psisq,3.5)
 
         c2     = coef1 * satellite.sgps.xnodp * (satellite.sgps.aodp *
-                 (1 + 1.5 * etasq + eeta * (4+etasq)) +
-                 0.75 * RPredict::Norad.CK2 * tsi / psisq * satellite.sgps.satellite.sgps.x3thm1 *
-                 (8 + 3.0 * etasq * ( 8 + etasq)))
+                 (1.0 + 1.5 * etasq + eeta * (4.0+etasq)) +
+                 0.75 * RPredict::Norad::CK2 * tsi / psisq *
+                 satellite.sgps.x3thm1 *
+                 (8.0 + 3.0 * etasq * ( 8 + etasq)))
 
-        c1     = satellite.tle.bstar*c2
+        satellite.sgps.c1   = satellite.tle.bstar*c2
 
         satellite.sgps.sinio  = Math::sin(satellite.tle.xincl)
+        # mm ae
+        a3ovk2 = -RPredict::Norad::XJ3/RPredict::Norad::CK2*
+                  RPredict::SGPMath.pow(RPredict::Norad::AE,3)
 
-        a3ovk2 = -xj3/RPredict::Norad.CK2*RPredict::SGPMath.pow(ae,3)
-
-        c3     = coef*tsi*a3ovk2*satellite.sgps.xnodp * ae *
+        c3     = coef*tsi*a3ovk2*satellite.sgps.xnodp * RPredict::Norad::AE *
                  satellite.sgps.sinio/satellite.tle.eo
 
-        satellite.sgps.x1mth2 = 1-theta2
+        satellite.sgps.x1mth2 = 1.0-theta2
 
-        satellite.sgps.c4 = 2 * satellite.sgps.xnodp * coef1*satellite.sgps.aodp *
-                            betao2 *(satellite.sgps.eta * (2 + 0.5 * etasq) +
-                            satellite.tle.eo*(0.5 + 2 * etasq) - 2 * RPredict::Norad.CK2 *
+        satellite.sgps.c4 = 2.0 * satellite.sgps.xnodp * coef1*satellite.sgps.aodp *
+                            betao2 *(satellite.sgps.eta * (2.0 + 0.5 * etasq) +
+                            satellite.tle.eo*(0.5 + 2 * etasq) - 2 * RPredict::Norad::CK2 *
                             tsi / (satellite.sgps.aodp*psisq) *
-                            (-3 * satellite.sgps.satellite.sgps.x3thm1 * (1 - 2 * eeta + etasq *
+                            (-3.0* satellite.sgps.x3thm1 * (1.0 - 2.0 * eeta + etasq *
                             (1.5 - 0.5 * eeta))+ 0.75 * satellite.sgps.x1mth2 *
-                            (2 * etasq - eeta * (1+etasq)) *
-                            Math::cos(2*satellite.tle.omegao)))
+                            (2.0 * etasq - eeta * (1.0+etasq)) *
+                            Math::cos(2.0*satellite.tle.omegao)))
 
-        satellite.sgps.satellite.sgps.c5
-
-                        = 2 * coef1 * satellite.sgps.aodp *
-                            betao2*(1+2.75*(etasq+eeta)+eeta*etasq)
+        satellite.sgps.c5 = 2.0 * coef1 * satellite.sgps.aodp *
+                            betao2*(1.0+2.75*(etasq+eeta)+eeta*etasq)
 
         theta4 = theta2**2
-        temp1 = 3*RPredict::Norad.CK2*p i
-                nvsq*satellite.sgps.xnodp
-        temp2 = temp1*RPredict::Norad.CK2*pinvsq
-        temp3 = 1.25*RPredict::Norad.CK4*pinvsq*pinvsq*satellite.sgps.xnodp
+        temp1 = 3.0*RPredict::Norad::CK2*pinvsq*satellite.sgps.xnodp
+        temp2 = temp1*RPredict::Norad::CK2*pinvsq
+        temp3 = 1.25*RPredict::Norad::CK4*pinvsq*pinvsq*satellite.sgps.xnodp
 
         satellite.sgps.xmdot = satellite.sgps.xnodp + 0.5 * temp1 * betao *
-                satellite.sgps.x3thm1+0.0625*temp2*betao*(13-78*theta2+137*theta4)
+                satellite.sgps.x3thm1+0.0625*temp2*betao*(13.0-78.0*theta2+137.0*theta4)
 
-        x1m5th = 1-5*theta2
+        x1m5th = 1.0-5.0*theta2
 
         satellite.sgps.omgdot = -0.5*temp1*x1m5th+0.0625*temp2 *
-                                (7-114*theta2+395*theta4)+temp3*
-                                (3-36*theta2+49*theta4)
+                                (7.0-114.0*theta2+395.0*theta4)+temp3*
+                                (3.0-36.0*theta2+49.0*theta4)
 
         xhdot1 = -temp1*satellite.sgps.cosio
 
-        satellite.sgps.xnodot = xhdot1 + (0.5 * temp2 * (4-19*theta2) + 2 *
-                                temp3*(3-7*theta2))*satellite.sgps.cosio
+        satellite.sgps.xnodot = xhdot1 + (0.5 * temp2 * (4.0-19.0*theta2) + 2.0 *
+                                temp3*(3.0-7.0*theta2))*satellite.sgps.cosio
 
         satellite.sgps.omgcof = satellite.tle.bstar * c3 *
                   Math::cos(satellite.tle.omegao)
 
-        satellite.sgps.xmcof = -RPredict::Norad.TOTHRD * coef *
-                               satellite.tle.bstar*ae/eeta
+        satellite.sgps.xmcof = -RPredict::Norad::TOTHRD * coef *
+                               satellite.tle.bstar*RPredict::Norad::AE/eeta
 
         satellite.sgps.xnodcf = 3.5 * betao2 * xhdot1 * satellite.sgps.c1
 
         satellite.sgps.t2cof = 1.5 * satellite.sgps.c1
 
         satellite.sgps.xlcof = 0.125 * a3ovk2 * satellite.sgps.sinio *
-                              (3 + 5 * satellite.sgps.cosio)/(1+satellite.sgps.cosio)
+                              (3.0 + 5.0 * satellite.sgps.cosio)/(1.0+satellite.sgps.cosio)
 
         satellite.sgps.aycof = 0.25*a3ovk2*satellite.sgps.sinio
 
@@ -146,42 +146,47 @@ module RPredict
 
         satellite.sgps.sinmo = Math::sin(satellite.tle.xmo)
 
-        satellite.sgps.x7thm1 = 7 * theta2 - 1.0
+        satellite.sgps.x7thm1 = 7.0 * theta2 - 1.0
 
-        if (~satellite.flags & SIMPLE_FLAG))
+        if (~satellite.flags & RPredict::Norad::SIMPLE_FLAG) !=0
 
           c1sq = satellite.sgps.c1**2
 
-          satellite.sgps.d2 = 4 * satellite.sgps.aodp * tsi * c1sq
+          satellite.sgps.d2 = 4.0 * satellite.sgps.aodp * tsi * c1sq
 
-          temp = satellite.sgps.d2 * tsi * satellite.sgps.c1/3
+          temp = satellite.sgps.d2 * tsi * satellite.sgps.c1/3.0
 
-          satellite.sgps.d3 = (17*satellite.sgps.aodp+s4)*temp
+          satellite.sgps.d3 = (17.0*satellite.sgps.aodp+s4)*temp
 
           satellite.sgps.d4 = 0.5 * temp * satellite.sgps.aodp * tsi *
-                             (221 * satellite.sgps.aodp + 31 *s4) *
+                             (221.0 * satellite.sgps.aodp + 31.0 *s4) *
                              satellite.sgps.c1
 
-          satellite.sgps.t3cof = satellite.sgps.d2 + 2 * c1sq
+          satellite.sgps.t3cof = satellite.sgps.d2 + 2.0 * c1sq
 
-          satellite.sgps.t4cof = 0.25 * (3 * satellite.sgps.d3 +
-                                 satellite.sgps.c1 * (12 *
-                                  satellite.sgps.d2 + 10 * c1sq))
+          satellite.sgps.t4cof = 0.25 * (3.0 * satellite.sgps.d3 +
+                                 satellite.sgps.c1 * (12.0 *
+                                  satellite.sgps.d2 + 10.0 * c1sq))
 
-          satellite.sgps.t5cof = 0.2 * (3 * satellite.sgps.d4 +
-                                 12 * satellite.sgps.c1 *
-                                 satellite.sgps.d3 + 6 *
+          satellite.sgps.t5cof = 0.2 * (3.0 * satellite.sgps.d4 +
+                                 12.0 * satellite.sgps.c1 *
+                                 satellite.sgps.d3 + 6.0 *
                                  satellite.sgps.d2 * satellite.sgps.d2 +
-                                 15 * c1sq * ( 2 * satellite.sgps.d2 + c1sq))
+                                 15.0 * c1sq * ( 2.0 * satellite.sgps.d2 + c1sq))
         end
       end
 
       # Update for secular gravity and atmospheric drag.
-      xmdf = satellite.tle.xmo + satellite.sgps.xmdot * tsince
+      xmdf   = satellite.tle.xmo   + satellite.sgps.xmdot   * tsince
+
+
 
       omgadf = satellite.tle.omegao + satellite.sgps.omgdot * tsince
 
+      #p "xmdf => #{xmdf} satellite.tle.xmo => #{satellite.tle.xmo} satellite.sgps.xmdot => #{satellite.sgps.xmdot} tsince => #{tsince}"
+
       xnoddf = satellite.tle.xnodeo + satellite.sgps.xnodot * tsince
+
 
       omega = omgadf
 
@@ -191,30 +196,28 @@ module RPredict
 
       xnode = xnoddf + satellite.sgps.xnodcf * tsq
 
-      tempa = 1 - satellite.sgps.c1 * tsince
+      tempa = 1.0 - satellite.sgps.c1 * tsince
       tempe = satellite.tle.bstar * satellite.sgps.c4 * tsince
       templ = satellite.sgps.t2cof * tsq
 
-      if (~satellite.flags & SIMPLE_FLAG)
-
+      if (~satellite.flags & RPredict::Norad::SIMPLE_FLAG) !=0
+        p "Entre \n"
         delomg = satellite.sgps.omgcof * tsince
         delm = satellite.sgps.xmcof * ( RPredict::SGPMath.pow(1 +
           satellite.sgps.eta* Math::cos(xmdf),3) - satellite.sgps.delmo)
 
+        #p satellite.sgps
+
         temp  = delomg+delm
-
-        xmp = xmdf+temp
-
+        xmp   = xmdf+temp
         omega = omgadf-temp
 
         tcube = tsq*tsince
-
         tfour = tsince*tcube
-
         tempa = tempa-satellite.sgps.d2*tsq-satellite.sgps.d3 *
                 tcube-satellite.sgps.d4*tfour
-        tempe = tempe+satellite.tle.bstar*satellite.sgps.c5 *
-               (Math::sin(xmp)-satellite.sgps.sinmo)
+        tempe = tempe + satellite.tle.bstar * satellite.sgps.c5 *
+               (Math::sin(xmp) - satellite.sgps.sinmo)
         templ = templ+satellite.sgps.t3cof*tcube+tfour *
                 (satellite.sgps.t4cof+tsince*satellite.sgps.t5cof)
       end
@@ -223,21 +226,26 @@ module RPredict
 
       e = satellite.tle.eo-tempe
 
+
       xl = xmp+omega+xnode+satellite.sgps.xnodp*templ
+      #p "xl => #{xl} xmp => #{xmp} omega => #{omega} xnode => #{xnode}  templ => #{templ}"
 
-      beta = Math::sqrt(1-e*e)
+      beta = Math::sqrt(1.0-e*e)
 
-      xn = RPredict::Norad.XKE/RPredict::SGPMath.pow(a,1.5)
+      xn = RPredict::Norad::XKE/RPredict::SGPMath.pow(a,1.5)
 
       # Long period periodics
       axn = e*Math::cos(omega)
 
-      temp = 1/(a*beta*beta)
+      temp = 1.0/(a*beta*beta)
 
       xll = temp*satellite.sgps.xlcof*axn
 
+      #p "xll => #{xll} temp => #{temp} satellite.sgps.xlcof => #{satellite.sgps.xlcof} axn => #{axn}"
+
       aynl = temp*satellite.sgps.aycof
       xlt = xl+xll
+      #p "a => #{a}  xlt => #{xlt} xnode => #{xnode}"
 
       ayn = e * Math::sin(omega)+aynl
 
@@ -245,7 +253,7 @@ module RPredict
       capu = RPredict::SGPMath.fMod2p(xlt-xnode)
       temp2 = capu
       i = 0
-
+      #p "temp2 #{temp2}"
       begin
 
         sinepw = Math::sin(temp2)
@@ -256,7 +264,7 @@ module RPredict
         temp6 = ayn*sinepw
         epw = (capu-temp4+temp3-temp2)/(1-temp5-temp6)+temp2
 
-        if (epw-temp2).abs <=  RPredict::Norad.E6A
+        if (epw-temp2).abs <=  RPredict::Norad::E6A
           break
         end
         temp2 = epw
@@ -267,29 +275,34 @@ module RPredict
       ecose = temp5+temp6
       esine = temp3-temp4
       elsq = axn**2 + ayn**2
-      temp = 1-elsq
+      temp = 1.0-elsq
       pl = a*temp
-      r = a*(1-ecose)
-      temp1 = 1/r
-      rdot = RPredict::Norad.XKE*Math::sqrt(a)*esine*temp1
-      rfdot = RPredict::Norad.XKE*Math::sqrt(pl)*temp1
+      r = a*(1.0-ecose)
+      temp1 = 1.0/r
+      rdot = RPredict::Norad::XKE*Math::sqrt(a)*esine*temp1
+      rfdot = RPredict::Norad::XKE*Math::sqrt(pl)*temp1
       temp2 = a*temp1
       betal = Math::sqrt(temp)
-      temp3 = 1/(1+betal)
+      temp3 = 1.0/(1.0+betal)
       cosu = temp2*(cosepw-axn+ayn*esine*temp3)
       sinu = temp2*(sinepw-ayn-axn*esine*temp3)
-      u = Math::atan(sinu,cosu)
-      sin2u = 2*sinu*cosu
-      cos2u = 2*cosu*cosu-1.0
-      temp = 1/pl
-      temp1 = RPredict::Norad.CK2*temp
+
+      #p "sinu - #{sinu} temp2 - #{temp2} sinepw - #{sinepw} ayn - #{ayn} axn - #{axn} esine - #{esine} temp3 - #{temp3} "
+
+      u = RPredict::SGPMath.acTan(sinu,cosu)
+      sin2u = 2.0*sinu*cosu
+      cos2u = 2.0*cosu*cosu-1.0
+      temp = 1.0/pl
+      temp1 = RPredict::Norad::CK2*temp
       temp2 = temp1*temp
 
       # Update for short periodics
-      rk = r*(1-1.5*temp2*betal*satellite.sgps.x3thm1)+
+      rk = r*(1.0-1.5*temp2*betal*satellite.sgps.x3thm1)+
              0.5*temp1*satellite.sgps.x1mth2*cos2u
 
-      uk = u-0.25*temp2*satellite.sgps.x7thm1 *sin2u
+      uk = u - 0.25 * temp2 * satellite.sgps.x7thm1 * sin2u
+
+      #p "uk -- #{uk} Temp2 #{temp2} x7thm1 #{satellite.sgps.x7thm1} sin2u #{sin2u}"
 
       xnodek = xnode+1.5*temp2*satellite.sgps.cosio*sin2u
 
@@ -310,6 +323,7 @@ module RPredict
       cosnok = Math::cos(xnodek)
       xmx = -sinnok*cosik
       xmy = cosnok*cosik
+      #p "#{xmx} * #{sinuk} + #{cosnok}* #{cosuk}"
       ux = xmx*sinuk+cosnok*cosuk
       uy = xmy*sinuk+sinnok*cosuk
       uz = sinik*sinuk
@@ -317,24 +331,29 @@ module RPredict
       vy = xmy*cosuk-sinnok*sinuk
       vz = sinik*cosuk
 
-      # Position and velocity
-      pos.x = rk*ux
-      pos.y = rk*uy
-      pos.z = rk*uz
-      vel.x = rdotk*ux+rfdotk*vx
-      vel.y = rdotk*uy+rfdotk*vy
-      vel.z = rdotk*uz+rfdotsk*vz
+      #p "ux #{ux} uy #{uy}"
+
+      # Position and satellite.velocityocity
+      satellite.position.x = rk*ux
+      satellite.position.y = rk*uy
+      satellite.position.z = rk*uz
+      satellite.velocity.x = rdotk*ux+rfdotk*vx
+      satellite.velocity.y = rdotk*uy+rfdotk*vy
+      satellite.velocity.z = rdotk*uz+rfdotk*vz
 
       # Phase in radians
-      satellite.phase = xlt-xnode-omgadf+Rpredic::Norad.TWOPI
+      satellite.phase = xlt-xnode-omgadf+RPredict::Norad::TWOPI
 
-      if (satellite.phase<0.0)
-        satellite.phase += RPredic.Norad.TWOPI
+      if (satellite.phase<0)
+        satellite.phase += RPredict::Norad::TWOPI
       end
 
       satellite.phase = RPredict::SGPMath.fMod2p(satellite.phase)
+      satellite.tle.omegao1 = omega;
+      satellite.tle.xincl1  = xinck;
+      satellite.tle.xnodeo1 = xnodek;
 
-      return  pos, vel, satellite
+      satellite
     end
 
 
@@ -342,13 +361,13 @@ module RPredict
     def SDP4 (satellite,tsince)
 
       # Initialization
-      if (~satellite.flags & SDP4_INITIALIZED_FLAG)
+      if (~satellite.flags & RPredict::Norad::SDP4_INITIALIZED_FLAG)
 
-        satellite.flags |= SDP4_INITIALIZED_FLAG
+        satellite.flags |= RPredict::Norad::SDP4_INITIALIZED_FLAG
 
         # Recover original mean motion (xnodp) and
         # semimajor axis (aodp) from input elements.
-        a1 = RPredict::SGPMath.pow(RPredict::Norad.XKE / satellite.tle.xno, RPredict::Norad.TOTHRD)
+        a1 = RPredict::SGPMath.pow(RPredict::Norad::XKE / satellite.tle.xno, RPredict::Norad::TOTHRD)
         satellite.deep_arg.cosio = Math::cos(satellite.tle.xincl)
         satellite.deep_arg.theta2 = satellite.deep_arg.cosio * satellite.deep_arg.cosio
         satellite.sgps.x3thm1 = 3.0 * satellite.deep_arg.theta2 - 1.0
@@ -356,34 +375,34 @@ module RPredict
         satellite.deep_arg.betao2 = 1.0 - satellite.deep_arg.eosq
         satellite.deep_arg.betao = Math::sqrt(satellite.deep_arg.betao2)
 
-        del1 = 1.5 * RPredict::Norad.CK2 * satellite.sgps.x3thm1 /
+        del1 = 1.5 * RPredict::Norad::CK2 * satellite.sgps.x3thm1 /
           (a1 * a1 * satellite.deep_arg.betao * satellite.deep_arg.betao2)
 
-        ao = a1 * (1.0 - del1 * (0.5 * RPredict::Norad.TOTHRD + del1 *
+        ao = a1 * (1.0 - del1 * (0.5 * RPredict::Norad::TOTHRD + del1 *
                   (1.0 + 134.0 / 81.0 * del1)))
 
-        delo = 1.5 * RPredict::Norad.CK2 * satellite.sgps.x3thm1 /
+        delo = 1.5 * RPredict::Norad::CK2 * satellite.sgps.x3thm1 /
           (ao * ao * satellite.deep_arg.betao * satellite.deep_arg.betao2)
 
         satellite.deep_arg.xnodp = satellite.tle.xno / (1.0 + delo)
         satellite.deep_arg.aodp = ao / (1.0 - delo)
 
         # For perigee below 156 km, the values
-        # of s and qoms2t are altered.
+        # of s and RPredict::Norad::QOMS2T are altered.
 
-        s4 = RPredict::Norad.S__
+        s4 = RPredict::Norad::S__
 
-        qoms24 = qoms2t
-        perige = (satellite.deep_arg.aodp * (1.0 - satellite.tle.eo) - ae) *
-                  RPredict::Norad.XKMPER
+        qoms24 = RPredict::Norad::QOMS2T
+        perige = (satellite.deep_arg.aodp * (1.0 - satellite.tle.eo) - RPredict::Norad::AE) *
+                  RPredict::Norad::XKMPER
         if (perige < 156.0)
           if (perige <= 98.0)
             s4 = 20.0
           else
             s4 = perige - 78.0
           end
-          qoms24 = RPredict::SGPMath.pow((120.0 - s4) * ae / RPredict::Norad.XKMPER, 4)
-          s4 = s4 / RPredict::Norad.XKMPER + ae
+          qoms24 = RPredict::SGPMath.pow((120.0 - s4) * RPredict::Norad::AE / RPredict::Norad::XKMPER, 4)
+          s4 = s4 / RPredict::Norad::XKMPER + RPredict::Norad::AE
         end
         pinvsq = 1.0 / (satellite.deep_arg.aodp * satellite.deep_arg.aodp *
             satellite.deep_arg.betao2 * satellite.deep_arg.betao2)
@@ -403,20 +422,20 @@ module RPredict
         coef1 = coef / RPredict::SGPMath.pow(psisq, 3.5)
 
         c2 = coef1 * satellite.deep_arg.xnodp * (satellite.deep_arg.aodp *
-             (1.0 + 1.5 * etasq + eeta * (4.0 + etasq)) + 0.75 * RPredict::Norad.CK2 * tsi / psisq *
+             (1.0 + 1.5 * etasq + eeta * (4.0 + etasq)) + 0.75 * RPredict::Norad::CK2 * tsi / psisq *
               satellite.sgps.x3thm1 * (8.0 + 3.0 * etasq * (8.0 + etasq)))
 
         satellite.sgps.c1 = satellite.tle.bstar * c2
         satellite.deep_arg.sinio = Math::sin(satellite.tle.xincl)
 
-        a3ovk2 = -xj3 / RPredict::Norad.CK2 * RPredict::SGPMath.pow(ae, 3)
+        a3ovk2 = -RPredict::Norad::XJ3 / RPredict::Norad::CK2 * RPredict::SGPMath.pow(RPredict::Norad::AE, 3)
 
         satellite.sgps.x1mth2 = 1.0 - satellite.deep_arg.theta2
 
         satellite.sgps.c4 = 2.0 * satellite.deep_arg.xnodp * coef1 *
               satellite.deep_arg.aodp * satellite.deep_arg.betao2 *
               (eta * (2.0 + 0.5 * etasq) + satellite.tle.eo *
-              (0.5 + 2.0 * etasq) - 2.0 * RPredict::Norad.CK2 * tsi /
+              (0.5 + 2.0 * etasq) - 2.0 * RPredict::Norad::CK2 * tsi /
               (satellite.deep_arg.aodp * psisq) * (-3.0 * satellite.sgps.x3thm1 *
               (1.0 - 2.0 * eeta + etasq *
               (1.5 - 0.5 * eeta)) +
@@ -426,9 +445,9 @@ module RPredict
 
         theta4 = satellite.deep_arg.theta2 **2
 
-        temp1 = 3.0 * RPredict::Norad.CK2 * pinvsq * satellite.deep_arg.xnodp
-        temp2 = temp1 * RPredict::Norad.CK2 * pinvsq
-        temp3 = 1.25 * RPredict::Norad.CK4 * pinvsq * pinvsq * satellite.deep_arg.xnodp
+        temp1 = 3.0 * RPredict::Norad::CK2 * pinvsq * satellite.deep_arg.xnodp
+        temp2 = temp1 * RPredict::Norad::CK2 * pinvsq
+        temp3 = 1.25 * RPredict::Norad::CK4 * pinvsq * pinvsq * satellite.deep_arg.xnodp
 
         satellite.deep_arg.xmdot = satellite.deep_arg.xnodp + 0.5 * temp1 *
                          satellite.deep_arg.betao * satellite.sgps.x3thm1 +
@@ -463,7 +482,8 @@ module RPredict
         satellite.sgps.x7thm1 = 7.0 * satellite.deep_arg.theta2 - 1.0
 
         # initialize Deep()
-        deep (RPredict::Norad.DPINIT, satellite)
+
+        satellite = deep(RPredict::Norad::DPINIT, satellite)
       end #End of SDP4() initialization
 
       # Update for secular gravity and atmospheric drag
@@ -490,11 +510,13 @@ module RPredict
 
       satellite.deep_arg.t = tsince
 
-      Deep (RPredict::Norad.DPSEC, sat)
+      satellite = deep(RPredict::Norad::DPSEC, sat)
 
       xmdf = satellite.deep_arg.xll
 
-      a = RPredict::SGPMath.pow(RPredict::Norad.XKE / satellite.deep_arg.xn, RPredict::Norad.TOTHRD) * tempa * tempa
+      a = RPredict::SGPMath.pow(RPredict::Norad::XKE /
+                                satellite.deep_arg.xn, RPredict::Norad::TOTHRD) *
+                                tempa * tempa
 
       satellite.deep_arg.em = satellite.deep_arg.em - tempe
 
@@ -503,14 +525,14 @@ module RPredict
       # Update for deep-space periodic effects
       satellite.deep_arg.xll = xmam
 
-      Deep (RPredict::Norad.DPPER, satellite)
+      saltellite = deep(RPredict::Norad::DPPER, satellite)
 
       xmam = satellite.deep_arg.xll
 
       xl = xmam + satellite.deep_arg.omgadf + satellite.deep_arg.xnode
 
       beta = Math::sqrt(1.0 - satellite.deep_arg.em**2)
-      satellite.deep_arg.xn = RPredict::Norad.XKE / RPredict::SGPMath.pow( a, 1.5)
+      satellite.deep_arg.xn = RPredict::Norad::XKE / RPredict::SGPMath.pow( a, 1.5)
 
       # Long period periodics
       axn = satellite.deep_arg.em * Math::cos(satellite.deep_arg.omgadf)
@@ -542,7 +564,7 @@ module RPredict
         temp6 = ayn * sinepw
         epw = (capu - temp4 + temp3 - temp2) / (1.0 - temp5 - temp6) + temp2
 
-        if ((epw-temp2).abs <= RPredict::Norad.E6A)
+        if ((epw-temp2).abs <= RPredict::Norad::E6A)
           break
         end
 
@@ -561,18 +583,18 @@ module RPredict
       pl    = a * temp
       r     = a * (1.0 - ecose)
       temp1 = 1.0 / r
-      rdot  = RPredict::Norad.XKE * Math::sqrt(a) * esine * temp1
-      rfdot = RPredict::Norad.XKE * Math::sqrt(pl) *temp1
+      rdot  = RPredict::Norad::XKE * Math::sqrt(a) * esine * temp1
+      rfdot = RPredict::Norad::XKE * Math::sqrt(pl) *temp1
       temp2 = a * temp1
       betal = Math::sqrt(temp)
       temp3 = 1.0 / (1.0 + betal)
       cosu  = temp2 * (cosepw - axn + ayn * esine * temp3)
       sinu  = temp2 * (sinepw - ayn - axn * esine * temp3)
-      u     = Math::atan(sinu, cosu)
+      u     = RPredict::SGPMath.acTan(sinu, cosu)
       sin2u = 2.0 * sinu * cosu
       cos2u = 2.0 * cosu * cosu - 1.0
       temp  = 1.0 / pl
-      temp1 = RPredict::Norad.CK2 * temp
+      temp1 = RPredict::Norad::CK2 * temp
       temp2 = temp1 * temp
 
       # Update for short periodics
@@ -608,21 +630,21 @@ module RPredict
       vy     = xmy * cosuk - sinnok * sinuk
       vz     = sinik*cosuk
 
-      # Position and velocity
-      # pos and vel out ? ???????
+      # Position and satellite.velocityocity
+      # satellite.pos and satellite.velocity out ? ???????
 
-      pos.x = rk * ux
-      pos.y = rk * uy
-      pos.z = rk * uz
+      satellite.pos.x = rk * ux
+      satellite.pos.y = rk * uy
+      satellite.pos.z = rk * uz
 
-      vel.x = rdotk * ux + rfdotk * vx
-      vel.y = rdotk * uy + rfdotk * vy
-      vel.z = rdotk * uz + rfdotk * vz
+      satellite.velocity.x = rdotk * ux + rfdotk * vx
+      satellite.velocity.y = rdotk * uy + rfdotk * vy
+      satellite.velocity.z = rdotk * uz + rfdotk * vz
 
       # Phase in rads
-      satellite.phase = xlt - satellite.deep_arg.xnode - satellite.deep_arg.omgadf + Rpredic::Norad.TWOPI
+      satellite.phase = xlt - satellite.deep_arg.xnode - satellite.deep_arg.omgadf + Rpredic::Norad::TWOPI
       if (satellite.phase < 0.0)
-        satellite.phase += Rpredic::Norad.TWOPI
+        satellite.phase += Rpredic::Norad::TWOPI
       end
       satellite.phase = RPredict::SGPMath.fMod2p(satellite.phase)
 
@@ -633,17 +655,13 @@ module RPredict
 
 
 
-
-
-
-
     def deep(ientry, satellite)
 
       # This function is used by SDP4 to add lunar and solar
       # perturbation effects to deep-space orbit objects.
       case (ientry)
 
-        when RPredict::Norad.DPINIT
+        when RPredict::Norad::DPINIT
         # Entrance for deep space initialization
           satellite.dps.thgr, satellite.deep_arg = thetaG(satellite.tle.epoch,
                                                           satellite.deep_arg)
@@ -664,7 +682,7 @@ module RPredict
           # Initialize lunar solar terms
           day     = deep_arg.ds50+18261.5  # Days since 1900 Jan 0.5
 
-          if (day != satellite.dps.preep) {
+          if (day != satellite.dps.preep)
             satellite.dps.preep = day
             xnodce = 4.5236020 - 9.2422029E-4 * day
             stem = Math::sin(xnodce)
@@ -678,7 +696,7 @@ module RPredict
             satellite.dps.zmol = RPredict::SGPMath.fMod2p(c - gam)
             zx = 0.39785416 * stem / satellite.dps.zsinil
             zy = satellite.dps.zcoshl * ctem + 0.91744867 * satellite.dps.zsinhl * stem
-            zx = Math::atan(zx,zy)
+            zx = RPredict::SGPMath.acTan(zx,zy)
             zx = gam + zx - xnodce
             satellite.dps.zcosgl = Math::cos(zx)
             satellite.dps.zsingl = Math::sin(zx)
@@ -688,15 +706,15 @@ module RPredict
 
           # Do solar terms
           satellite.dps.savtsn = 1E20
-          zcosg = RPredict::NOrad.ZCOSGS
-          zsing = RPredict::NOrad.ZSINGS
-          zcosi = RPredict::NOrad.ZCOSIS
-          zsini = RPredict::NOrad.ZSINIS
+          zcosg = RPredict::Norad::ZCOSGS
+          zsing = RPredict::Norad::ZSINGS
+          zcosi = RPredict::Norad::ZCOSIS
+          zsini = RPredict::Norad::ZSINIS
           zcosh = cosq
           zsinh = sinq
-          cc = RPredict::NOrad.C1SS
-          zn = RPredict::NOrad.ZNS
-          ze = RPredict::NOrad.ZES
+          cc = RPredict::Norad::C1SS
+          zn = RPredict::Norad::ZNS
+          ze = RPredict::Norad::ZES
 
           zmo = satellite.dps.zmos
 
@@ -755,6 +773,7 @@ module RPredict
             sh = -zn*s2*(z21+z23)
             if (satellite.dps.xqncl < 5.2359877E-2)
               sh = 0
+            end
             satellite.dps.ee2 = 2*s1*s6
             satellite.dps.e3 = 2*s1*s7
             satellite.dps.xi2 = 2*s2*z12
@@ -768,7 +787,7 @@ module RPredict
             satellite.dps.xh2 = -2*s2*z22
             satellite.dps.xh3 = -2*s2*(z23-z21)
 
-            if (satellite.flags & LUNAR_TERMS_DONE_FLAG)
+            if (satellite.flags & RPredict::Norad::LUNAR_TERMS_DONE_FLAG)
               break
             end
 
@@ -800,7 +819,7 @@ module RPredict
             cc = c1l
             ze = zel
             zmo = satellite.dps.zmol
-            satellite.flags |= LUNAR_TERMS_DONE_FLAG
+            satellite.flags |= RPredict::Norad::LUNAR_TERMS_DONE_FLAG
           end # End of for()
 
           satellite.dps.sse = satellite.dps.sse+se
@@ -810,8 +829,8 @@ module RPredict
           satellite.dps.ssh = satellite.dps.ssh+sh/satellite.deep_arg.sinio
 
           # Geopotential resonance initialization for 12 hour orbits
-          satellite.flags &= ~RESONANCE_FLAG
-          satellite.flags &= ~SYNCHRONOUS_FLAG
+          satellite.flags &= ~RPredict::Norad::RESONANCE_FLAG
+          satellite.flags &= ~RPredict::Norad::SYNCHRONOUS_FLAG
 
           if( !((satellite.dps.xnq < 0.0052359877) && (satellite.dps.xnq > 0.0034906585)) )
             if( (satellite.dps.xnq < 0.00826) || (satellite.dps.xnq > 0.00924) )
@@ -821,7 +840,7 @@ module RPredict
             if (eq < 0.5)
               return satellite
             end
-            satellite.flags |= RESONANCE_FLAG
+            satellite.flags |= RPredict::Norad::RESONANCE_FLAG
             eoc = eq*satellite.deep_arg.eosq
             g201 = -0.306-(eq-0.64)*0.440
             if (eq <= 0.65)
@@ -851,7 +870,7 @@ module RPredict
                 g520 = 1464.74-4664.75*eq+3763.64*satellite.deep_arg.eosq
               else
                 g520 = -5149.66+29936.92*eq-54087.36*
-                  satellite.deep_arg.eosq+31324.56*eoc
+                       satellite.deep_arg.eosq+31324.56*eoc
               end
 
             end # End if (eq <= 0.65)
@@ -886,8 +905,8 @@ module RPredict
                            satellite.deep_arg.theta2)+0.33333333*(-2+4*satellite.deep_arg.cosio+
                                  6*satellite.deep_arg.theta2))
             f523 = satellite.deep_arg.sinio*(4.92187512*sini2*(-2-4*
-                        satellite.deep_arg.cosio+10*satellite.deep_arg.theta2)+6.56250012
-                  *(1+2*satellite.deep_arg.cosio-3*satellite.deep_arg.theta2))
+                        satellite.deep_arg.cosio+10*satellite.deep_arg.theta2)+6.56250012 *
+                       (1+2*satellite.deep_arg.cosio-3*satellite.deep_arg.theta2))
             f542 = 29.53125*satellite.deep_arg.sinio*(2-8*
                      satellite.deep_arg.cosio+satellite.deep_arg.theta2*
                      (-12+8*satellite.deep_arg.cosio+10*satellite.deep_arg.theta2))
@@ -897,22 +916,22 @@ module RPredict
             xno2 = satellite.dps.xnq*satellite.dps.xnq
             ainv2 = aqnv*aqnv
             temp1 = 3*xno2*ainv2
-            temp = temp1*RPredict::Norad.ROOT22
+            temp = temp1*RPredict::Norad::ROOT22
             satellite.dps.d2201 = temp*f220*g201
             satellite.dps.d2211 = temp*f221*g211
             temp1 = temp1*aqnv
-            temp = temp1*RPredict::Norad.ROOT32
+            temp = temp1*RPredict::Norad::ROOT32
             satellite.dps.d3210 = temp*f321*g310
             satellite.dps.d3222 = temp*f322*g322
             temp1 = temp1*aqnv
-            temp = 2*temp1*RPredict::Norad.ROOT44
+            temp = 2*temp1*RPredict::Norad::ROOT44
             satellite.dps.d4410 = temp*f441*g410
             satellite.dps.d4422 = temp*f442*g422
             temp1 = temp1*aqnv
-            temp = temp1*RPredict::Norad.ROOT52
+            temp = temp1*RPredict::Norad::ROOT52
             satellite.dps.d5220 = temp*f522*g520
             satellite.dps.d5232 = temp*f523*g532
-            temp = 2*temp1*RPredict::Norad.ROOT54
+            temp = 2*temp1*RPredict::Norad::ROOT54
             satellite.dps.d5421 = temp*f542*g521
             satellite.dps.d5433 = temp*f543*g533
             satellite.dps.xlamo = xmao+satellite.tle.xnodeo+satellite.tle.xnodeo-satellite.dps.thgr-satellite.dps.thgr
@@ -921,8 +940,8 @@ module RPredict
             bfact = bfact+satellite.dps.ssl+satellite.dps.ssh+satellite.dps.ssh
           # if( !(satellite.dps.xnq < 0.0052359877) && (satellite.dps.xnq > 0.0034906585) )
           else
-            satellite.flags |= RESONANCE_FLAG
-            satellite.flags |= SYNCHRONOUS_FLAG
+            satellite.flags |= RPredict::Norad::RESONANCE_FLAG
+            satellite.flags |= RPredict::Norad::SYNCHRONOUS_FLAG
             # Synchronous resonance terms initialization
             g200 = 1+satellite.deep_arg.eosq*(-2.5+0.8125*satellite.deep_arg.eosq)
             g310 = 1+2*satellite.deep_arg.eosq
@@ -956,7 +975,7 @@ module RPredict
           # End case dpinit:
           return satellite
 
-        case RPredict::Norad.DPSEC: # Entrance for deep space secular effects
+        when RPredict::Norad::DPSEC # Entrance for deep space secular effects
 
           satellite.deep_arg.xll = satellite.deep_arg.xll+satellite.dps.ssl*satellite.deep_arg.t
           satellite.deep_arg.omgadf = satellite.deep_arg.omgadf+satellite.dps.ssg*satellite.deep_arg.t
@@ -969,7 +988,7 @@ module RPredict
             satellite.deep_arg.omgadf = satellite.deep_arg.omgadf-pi
           end
 
-          if( ~satellite.flags & RESONANCE_FLAG )
+          if( ~satellite.flags & RPredict::Norad::RESONANCE_FLAG )
             return satellite
           end
 
@@ -999,11 +1018,11 @@ module RPredict
 
             begin
               if ( fabs(satellite.deep_arg.t-satellite.dps.atime) >= satellite.dps.stepp )
-                satellite.flags |= DO_LOOP_FLAG
-                satellite.flags &= ~EPOCH_RESTART_FLAG
+                satellite.flags |= RPredict::Norad::DO_LOOP_FLAG
+                satellite.flags &= ~RPredict::Norad::EPOCH_RESTART_FLAG
               else
                 ft = satellite.deep_arg.t-satellite.dps.atime
-                satellite.flags &= ~DO_LOOP_FLAG
+                satellite.flags &= ~RPredict::Norad::DO_LOOP_FLAG
               end
 
               if( fabs(satellite.deep_arg.t) < fabs(satellite.dps.atime) )
@@ -1012,11 +1031,12 @@ module RPredict
                 else
                   delt = satellite.dps.stepp
                 end
-                satellite.flags |= (DO_LOOP_FLAG | EPOCH_RESTART_FLAG)
+                satellite.flags |= (RPredict::Norad::DO_LOOP_FLAG |
+                                    RPredict::Norad::EPOCH_RESTART_FLAG)
               end
 
               # Dot terms calculated
-              if (satellite.flags & SYNCHRONOUS_FLAG)
+              if (satellite.flags & RPredict::Norad::SYNCHRONOUS_FLAG)
                 xndot = satellite.dps.del1*
                          Math::sin(satellite.dps.xli-satellite.dps.fasx2)+
                          satellite.dps.del2 *
@@ -1057,35 +1077,36 @@ module RPredict
               xldot = satellite.dps.xni+satellite.dps.xfact
               xnddt = xnddt*xldot
 
-              if(satellite.flags & DO_LOOP_FLAG)
+              if(satellite.flags & RPredict::Norad::DO_LOOP_FLAG)
                 satellite.dps.xli = satellite.dps.xli+xldot*delt+xndot*satellite.dps.step2
                 satellite.dps.xni = satellite.dps.xni+xndot*delt+xnddt*satellite.dps.step2
                 satellite.dps.atime = satellite.dps.atime+delt
               end
-            end while ( (satellite.flags & DO_LOOP_FLAG) &&
-              (~satellite.flags & EPOCH_RESTART_FLAG))
+            end while ( (satellite.flags & RPredict::Norad::DO_LOOP_FLAG) &&
+                        (~satellite.flags & RPredict::Norad::EPOCH_RESTART_FLAG))
 
-          end  while ((satellite.flags & DO_LOOP_FLAG) && (satellite.flags & EPOCH_RESTART_FLAG))
+          end  while ((satellite.flags & RPredict::Norad::DO_LOOP_FLAG) &&
+                      (satellite.flags & RPredict::Norad::EPOCH_RESTART_FLAG))
 
           satellite.deep_arg.xn = satellite.dps.xni+xndot*ft+xnddt*ft*ft*0.5
           xl = satellite.dps.xli+xldot*ft+xndot*ft*ft*0.5
           temp = -satellite.deep_arg.xnode+satellite.dps.thgr+satellite.deep_arg.t*thdt
 
-          if (~satellite.flags & SYNCHRONOUS_FLAG)
+          if (~satellite.flags & RPredict::Norad::SYNCHRONOUS_FLAG)
             satellite.deep_arg.xll = xl+temp+temp
           else
             satellite.deep_arg.xll = xl-satellite.deep_arg.omgadf+temp
           end
           return satellite
-          #End case RPredict::Norad.DPSEC:
+          #End case RPredict::Norad::DPSEC:
 
-        case RPredict::Norad.DPPER: # Entrance for lunar-solar periodics
+        when RPredict::Norad::DPPER # Entrance for lunar-solar periodics
           sinis = Math::sin(satellite.deep_arg.xinc)
           cosis = Math::cos(satellite.deep_arg.xinc)
           if (fabs(satellite.dps.savtsn-satellite.deep_arg.t) >= 30)
             satellite.dps.savtsn = satellite.deep_arg.t
-            zm = satellite.dps.zmos+RPredict::NOrad.ZNS*satellite.deep_arg.t
-            zf = zm+2*RPredict::NOrad.ZES*Math::sin(zm)
+            zm = satellite.dps.zmos+RPredict::Norad::ZNS*satellite.deep_arg.t
+            zf = zm+2*RPredict::Norad::ZES*Math::sin(zm)
             sinzf = Math::sin(zf)
             f2 = 0.5*sinzf*sinzf-0.25
             f3 = -0.5*sinzf*Math::cos(zf)
@@ -1136,15 +1157,15 @@ module RPredict
             dls = satellite.dps.pl+pgh-satellite.dps.pinc*satellite.deep_arg.xnode*sinis
             xls = xls+dls
             xnoh = satellite.deep_arg.xnode
-            satellite.deep_arg.xnode = Math::atan(alfdp,betdp)
+            satellite.deep_arg.xnode = RPredict::SGPMath.acTan(alfdp,betdp)
 
             # This is a patch to Lyddane modification
             # suggested by Rob Matson.
             if(fabs(xnoh-satellite.deep_arg.xnode) > pi)
               if(satellite.deep_arg.xnode < xnoh)
-                satellite.deep_arg.xnode +=Rpredic::Norad.TWOPI
+                satellite.deep_arg.xnode +=Rpredic::Norad::TWOPI
               else
-                satellite.deep_arg.xnode -=Rpredic::Norad.TWOPI
+                satellite.deep_arg.xnode -=Rpredic::Norad::TWOPI
               end
             end
 
@@ -1152,7 +1173,7 @@ module RPredict
             satellite.deep_arg.xll = satellite.deep_arg.xll+satellite.dps.pl
             satellite.deep_arg.omgadf = xls-satellite.deep_arg.xll-cos(satellite.deep_arg.xinc)*
                                    satellite.deep_arg.xnode
-          end # End case RPredict::Norad.DPPER:
+          end # End case RPredict::Norad::DPPER:
           return satellite
 
         end # End switch(ientry)
