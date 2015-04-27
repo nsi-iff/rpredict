@@ -342,9 +342,7 @@ module RPredict
       satellite.velocity.y = rdotk*uy+rfdotk*vy
       satellite.velocity.z = rdotk*uz+rfdotk*vz
 
-      p "======>> #{satellite.position.x}"
-
-      # Phase in radians
+     # Phase in radians
       satellite.phase = xlt-xnode-omgadf+RPredict::Norad::TWOPI
 
       if (satellite.phase<0)

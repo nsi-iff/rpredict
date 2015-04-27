@@ -9,5 +9,6 @@ module RPredict
   autoload :Geodetic , 'rpredict/geodetic'
   autoload :SGPSDP  , 'rpredict/sgp4sdp4'
   autoload :OrbitTools  , 'rpredict/orbit_tools'
+  autoload :GroundStation, 'rpredict/groundStation'
 
 end
