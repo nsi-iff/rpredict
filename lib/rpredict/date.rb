@@ -65,6 +65,9 @@ module RPredict
       year = epoch[0..1].to_i
       day =  epoch[2..13].to_f
 
+      #year = parseInt(epoch * 1E-3);
+      #day = ((epoch * 1E-3) - year) * 1E3;
+
       if (year < 57)
         year = year + 2000
       else

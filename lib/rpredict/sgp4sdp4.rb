@@ -14,8 +14,8 @@ module RPredict
 
       #Satellite satellite.position and satellite.velocityocity vectors
 
-
       if ((~satellite.flags) & RPredict::Norad::SGP4_INITIALIZED_FLAG) != 0
+
 
         satellite.flags |= RPredict::Norad::SGP4_INITIALIZED_FLAG
 
@@ -201,7 +201,7 @@ module RPredict
       templ = satellite.sgps.t2cof * tsq
 
       if (~satellite.flags & RPredict::Norad::SIMPLE_FLAG) !=0
-        p "Entre \n"
+
         delomg = satellite.sgps.omgcof * tsince
         delm = satellite.sgps.xmcof * ( RPredict::SGPMath.pow(1 +
           satellite.sgps.eta* Math::cos(xmdf),3) - satellite.sgps.delmo)
@@ -230,7 +230,8 @@ module RPredict
       xl = xmp+omega+xnode+satellite.sgps.xnodp*templ
       #p "xl => #{xl} xmp => #{xmp} omega => #{omega} xnode => #{xnode}  templ => #{templ}"
 
-      beta = Math::sqrt(1.0-e*e)
+
+      beta = Math::sqrt(1.0 - e*e)
 
       xn = RPredict::Norad::XKE/RPredict::SGPMath.pow(a,1.5)
 
@@ -340,6 +341,8 @@ module RPredict
       satellite.velocity.x = rdotk*ux+rfdotk*vx
       satellite.velocity.y = rdotk*uy+rfdotk*vy
       satellite.velocity.z = rdotk*uz+rfdotk*vz
+
+      p "======>> #{satellite.position.x}"
 
       # Phase in radians
       satellite.phase = xlt-xnode-omgadf+RPredict::Norad::TWOPI

@@ -8,5 +8,6 @@ module RPredict
   autoload :Norad, 'rpredict/norad'
   autoload :Geodetic , 'rpredict/geodetic'
   autoload :SGPSDP  , 'rpredict/sgp4sdp4'
+  autoload :OrbitTools  , 'rpredict/orbit_tools'
 
 end

@@ -76,9 +76,13 @@ module RPredict
           @line1[20...32].to_f
       end
 
-      # ndot Satellite - f - s
+      # ndot Satellite - f - s - drag
       def firstderivativmeanmotion
           @line1[33...43].to_f
+      end
+
+      def drag
+        firstderivativmeanmotion
       end
 
       # nddot Satellite - f -s
