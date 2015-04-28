@@ -10,5 +10,6 @@ module RPredict
   autoload :SGPSDP  , 'rpredict/sgp4sdp4'
   autoload :OrbitTools  , 'rpredict/orbit_tools'
   autoload :GroundStation, 'rpredict/groundStation'
+  autoload :Ephemeris, 'rpredict/ephemeris'
 
 end
