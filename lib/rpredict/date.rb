@@ -20,6 +20,26 @@ module RPredict
 
     end
 
+    def doy(yr, mo, dy)
+
+      days= [31,28,31,30,31,30,31,31,30,31,30,31]
+
+      day = 0
+      for i in 0...mo-1 do
+        day += days[i]
+      end
+
+      day = day + dy
+
+      # Leap year correction
+      if((yr%4 == 0) && ((yr%100 != 0) || (yr%400 == 0)) && (mo>2))
+        day+=1
+      end
+      day
+    end  #Function DOY
+
+
+
     def delta_ET(year)
 
       delta_et = 0.0
@@ -30,6 +50,83 @@ module RPredict
 
     def currentDaynum()
       (DateTime.now.strftime('%Q').to_i - 315446400000) / 86400000
+    end
+
+    def julianday(year, mon, day, hr, minute, sec)
+       (367.0 * year - ((7 * (year + ((mon + 9) / 12.0).floor)).floor * 0.25) +
+       (275 * mon / 9.0).floor + day + 1721013.5 + ((sec / 60.0 + minute) /
+        60.0 + hr) / 24.0)
+    end
+
+
+
+    def julianday_DateTime(cdate)
+      cdate.ajd.to_f
+      #julianday(cdate.year,cdate.mon,cdate.day,cdate.hour,cdate.min,cdate.sec)
+
+    end #Function Julian_Date
+
+    def invjulianday(jd)
+
+      # - - - - - - - - - - - - - - -find year and days of the year - - - - - - - - - - - - - - -* /
+      temp    = jd - 2415019.5
+      tu      = temp / 365.25
+      year    = 1900 + (tu).floor
+      leapyrs = ((year - 1901) * 0.25).floor
+
+      #optional nudge by 8.64x10 - 7 sec to get even outputs
+
+      days = temp - ((year - 1900) * 365.0 + leapyrs) + 0.00000000001
+
+      #* - - - - - - - - - - - -check for case of beginning of a year - - - - - - - - - - -* /
+      if (days < 1.0)
+          year    = year - 1
+          leapyrs = ((year - 1901) * 0.25).floor
+          days    = temp - ((year - 1900) * 365.0 + leapyrs)
+      end
+
+      #- - - - - - - - - - - - - - - - -find remaing data - - - - - - - - - - - - - - - - - - - - - - - - -* /
+
+      mon, day, hr, minute, sec = days2mdhms(year, days)
+
+      sec = sec - 0.00000086400
+
+      return year, mon, day, hr, minute, sec
+    end
+
+    def invjulianday_DateTime(jd)
+      year, mon, day, hr, minute, sec = RPredict::DateUtil.invjulianday(jd)
+      DateTime.new(year, mon, day, hr, minute, sec)
+    end
+
+    def days2mdhms(year, days)
+
+      lmonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+      dayofyr = days.floor
+      #- - - - - - - - - - - - - - - - -find month and day of month - - - - - - - - - - - - - - - -* /
+
+      if ((year % 4) == 0)
+          lmonth[1] = 29
+      end
+
+      i = 1
+      inttemp = 0
+      while ((dayofyr > inttemp + lmonth[i - 1]) and (i < 12))
+          inttemp = inttemp + lmonth[i - 1]
+          i+=1
+      end
+
+      mon = i.floor
+      day = dayofyr - inttemp
+
+      # - - - - - - - - - - - - - - - - -find hours minutes and seconds - - - - - - - - - - - - -* /
+      temp = (days - dayofyr) * 24.0
+      hr = temp.floor
+      temp = (temp - hr) * 60.0
+      minute = temp.floor
+      sec = (temp - minute) * 60.0
+      return mon,day,hr,minute,sec
     end
 
     def julian_Date_of_Year(year)
@@ -65,8 +162,8 @@ module RPredict
       year = epoch[0..1].to_i
       day =  epoch[2..13].to_f
 
-      #year = parseInt(epoch * 1E-3);
-      #day = ((epoch * 1E-3) - year) * 1E3;
+      #year = parseInt(epoch * 1E-3)
+      #day = ((epoch * 1E-3) - year) * 1E3
 
       if (year < 57)
         year = year + 2000

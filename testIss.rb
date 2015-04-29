@@ -1,7 +1,7 @@
 require 'rpredict'
 
 
-
+=begin
 name =  "ISS (ZARYA) "
 line1 =  "1 25544U 98067A   15107.19000354  .00020238  00000-0  29383-3 0  9999"
 line2 =  "2 25544  51.6475  28.7577 0005784 225.9745 219.7227 15.55776911938540"
@@ -37,6 +37,24 @@ p "                   VX: #{format("%14.8f",satellite.velocity.x)}"
 p "                   VY: #{format("%14.8f",satellite.velocity.y)}"
 
 p "                   VZ: #{format("%14.8f",satellite.velocity.z)}"
+=end
 
+
+t = DateTime.new(2015,04,28,14,03,20)
+p "Datetime  #{t}\n"
+
+jd = RPredict::DateUtil.julianday(2015,04,28,14,03,20)
+p "jd #{jd}"
+p "Inverso jd #{RPredict::DateUtil.invjulianday(jd)}\n"
+
+jddt = RPredict::DateUtil.julianday_DateTime(t)
+p "jddt #{jddt}"
+p "Inverso jddt #{RPredict::DateUtil.invjulianday(jddt)}\n"
+
+jda = t.ajd.to_f
+p "jda = #{jda}"
+p "Inverso jda #{RPredict::DateUtil.invjulianday(jda)}"
+
+p "\nInverso jda #{RPredict::DateUtil.invjulianday_DateTime(jda)}"
 
 

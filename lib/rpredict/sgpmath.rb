@@ -100,9 +100,6 @@ module RPredict
     end
 
 
-
-
-
     def scale_Vector(k, v)
 
       #Multiplies the vector v by the scalar k */

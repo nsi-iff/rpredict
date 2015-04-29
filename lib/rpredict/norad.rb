@@ -191,5 +191,32 @@ module RPredict
       satellite
     end
 
+    def isFlagClear(satellite,flag)
+      if (~satellite.flags & flag) != 0
+         true
+      else
+        false
+      end
+
+    end
+
+    def isFlagSet(satellite,flag)
+      if (satellite.flags & flag) !=0
+          true
+      else
+          false
+      end
+    end
+
+    def setFlag(satellite,flag)
+       satellite.flags |=  flag
+       satellite
+    end
+
+    def clearFlag(satellite,flag)
+       satellite.flags &=  ~flag
+       satellite
+    end
+
   end
 end

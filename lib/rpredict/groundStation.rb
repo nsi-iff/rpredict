@@ -11,33 +11,41 @@ module RPredict
       @position  =  RPredict::Norad.vector_t()
     end
 
-    def calculate_User_PosVel(time, geodetic, obs_pos, obs_vel)
+    def calculate_User_PosVel(time)
 
-      # Calculate_User_PosVel() passes the user's geodetic position
+      # Calculate_User_PosVel() passes the user's @geodetic position
       #   and the time of interest and returns the ECI position and
       #   velocity of the groundStation.  The velocity calculation assumes
-      #   the geodetic position is stationary relative to the earth's
+      #   the @geodetic position is stationary relative to the earth's
       #   surface.
 
       # Reference:  The 1992 Astronomical Almanac, page K11.
 
-      geodetic.theta = RPredict::SGPMath.fMod2p(RPredict::Norad::ThetaG_JD(time)+geodetic.lon);
+      @geodetic.theta = RPredict::SGPMath.fMod2p(RPredict::DateUtil.thetaG_JD(time) +
+                        @geodetic.longitude)
 
 
-      c=1/Math::sqrt(1+f*(f-2)*RPredict::SGPMath.sqr(Math::sin(geodetic.lat)));
-      sq=RPredict::SGPMath.sqr(1-f)*c;
-      achcp=(xkmper*c+geodetic.alt)*Math::cos(geodetic.lat);
-      obs_pos.x=achcp*Math::cos(geodetic.theta); # kilometers
-      obs_pos.y=achcp*Math::sin(geodetic.theta);
-      obs_pos.z=(xkmper*sq+geodetic.alt)*Math::sin(geodetic.lat);
-      obs_vel.x=-mfactor*obs_pos.y; # kilometers/second
-      obs_vel.y=mfactor*obs_pos.x;
-      obs_vel.z=0;
-      return RPredict::SGPMath.magnitude(obs_pos), RPredict::SGPMath.magnitude(obs_vel);
+      c = 1 / Math::sqrt(1 + RPredict::Norad::F__ * (RPredict::Norad::F__ - 2) *
+          RPredict::SGPMath.sqr(Math::sin(@geodetic.latitude)));
+
+      sq = RPredict::SGPMath.sqr(1 - RPredict::Norad::F__) * c;
+      achcp = (RPredict::Norad::XKMPER * c + @geodetic.altitude) *
+               Math::cos(@geodetic.latitude)
+
+      @position.x = achcp * Math::cos(@geodetic.theta); # kilometers
+      @position.y = achcp * Math::sin(@geodetic.theta);
+      @position.z = (RPredict::Norad::XKMPER * sq + @geodetic.altitude) *
+                     Math::sin(@geodetic.latitude)
+      @position.w = RPredict::SGPMath.magnitude(@position)
+
+      @velocity.x = -RPredict::Norad::MFACTOC * @position.y # kilometers/second
+      @velocity.y = RPredict::Norad::MFACTOC *  @position.x
+      @velocity.z = 0;
+      @velocity.w = RPredict::SGPMath.magnitude(@velocity);
     end
 
 
-    def calculate_Obs(time, pos, vel, geodetic, obs_set)
+    def calculate_Obs(time, satellite)
 
       # The procedures Calculate_Obs and Calculate_RADec calculate
       # the *topocentric* coordinates of the object with ECI position,
@@ -57,16 +65,15 @@ module RPredict
 
       #sin_lat, cos_lat, sin_theta, cos_theta, el, azim, top_s, top_e, top_z;
 
-      obs_pos = RPredict::SGPMath.vector_t()
-      obs_vel = RPredict::SGPMath.vector_t()
+
       range   = RPredict::SGPMath.vector_t()
       rgvel   = RPredict::SGPMath.vector_t()
 
-      obs_pos,obs_vel = calculate_User_PosVel(time, geodetic, obs_pos, obs_vel);
+      calculate_User_PosVel(time);
 
-      range.x = pos.x - obs_pos.x;
-      range.y = pos.y - obs_pos.y;
-      range.z = pos.z - obs_pos.z;
+      range.x = satellite.position.x - @position.x;
+      range.y = satellite.position.y - @position.y;
+      range.z = satellite.position.z - @position.z;
 
       # Save these values globally for calculating squint angles later...
 
@@ -74,35 +81,42 @@ module RPredict
       ry=range.y;
       rz=range.z;
 
-      rgvel.x = vel.x - obs_vel.x;
-      rgvel.y = vel.y - obs_vel.y;
-      rgvel.z = vel.z - obs_vel.z;
+      rgvel.x = satellite.velocity.x - @velocity.x;
+      rgvel.y = satellite.velocity.y - @velocity.y;
+      rgvel.z = satellite.velocity.z - @velocity.z;
 
-      range = RPredict::SGPMath.magnitude(range);
+      range.w = RPredict::SGPMath.magnitude(range);
 
-      sin_lat=Math::sin(geodetic.lat);
-      cos_lat=Math::cos(geodetic.lat);
-      sin_theta=Math::sin(geodetic.theta);
-      cos_theta=Math::cos(geodetic.theta);
-      top_s=sin_lat*cos_theta*range.x+sin_lat*sin_theta*range.y-cos_lat*range.z;
-      top_e=-sin_theta*range.x+cos_theta*range.y;
-      top_z=cos_lat*cos_theta*range.x+cos_lat*sin_theta*range.y+sin_lat*range.z;
-      azim=atan(-top_e/top_s); # Azimuth
+      sin_lat   = Math::sin(@geodetic.latitude);
+      cos_lat   = Math::cos(@geodetic.latitude);
+      sin_theta = Math::sin(@geodetic.theta);
+      cos_theta = Math::cos(@geodetic.theta);
 
-      if (top_s>0.0)
-        azim=azim+pi;
+      top_s     = sin_lat * cos_theta *range.x +sin_lat *sin_theta * range.y -
+                 cos_lat * range.z;
+
+      top_e     = -sin_theta * range.x + cos_theta * range.y;
+      top_z     = cos_lat * cos_theta * range.x + cos_lat * sin_theta *
+                  range.y + sin_lat * range.z;
+      azim      = atan(-top_e / top_s); # Azimuth
+
+      if (top_s > 0.0)
+        azim= azim + pi;
+      end
 
       if (azim<0.0)
-        azim=azim+twopi;
+        azim = azim + RPredict::Norad::TWOPI;
+      end
 
-      el=Math::asin(top_z/range.w);
-      obs_set.x=azim;  # Azimuth (radians)
-      obs_set.y=el;    # Elevation (radians)
-      obs_set.z=range.w; # Range (kilometers)
+      el = Math::asin(top_z / range.w);
 
-      # Range Rate (kilometers/second)
-      # ????????
-      obs_set.w=vdot(range,rgvel)/range.w;
+      ephemeris = RPredict::Ephemeris.new(azim, el, range.w,
+                                       RPredict::SGPMath.vdot(range,rgvel)/range.w)
+
+      #obs_set.x=azim;  # Azimuth (radians)
+      #obs_set.y=el;    # Elevation (radians)
+      #obs_set.z=range.w; # Range (kilometers)
+      #obs_set.w=vdot(range,rgvel)/range.w;
 
       # Corrections for atmospheric refraction
       # Reference:  Astronomical Algorithms by Jean Meeus, pp. 101-104
@@ -112,18 +126,39 @@ module RPredict
 
       # obs_set.y=obs_set.y+Radians((1.02/tan(Radians(Degrees(el)+10.3/(Degrees(el)+5.11))))/60);
 
-      obs_set.y=el;
-
       #*** End bypass ***
 
-      if (obs_set.y>=0.0)
+      if (ephemeris.elevation > = 0.0)
         RPredict::Norad::setFlag(VISIBLE_FLAG);
       else
-        obs_set.y=el;  # Reset to true elevation
         RPredict::Norad::clearFlag(VISIBLE_FLAG);
       end
-      obs_set
+      ephemeris
     end
+
+    def calculate_LatLonAlt(time, satellite,  geodetic_t *geodetic)
+
+      # Reference:  The 1992 Astronomical Almanac, page K12.
+
+      @geodetic.theta = AcTan(satellite.position->y,satellite.position->x);#radians
+      @geodetic.lon = FMod2p(@geodetic.theta - ThetaG_JD(_time));#radians
+      r = sqrt(Sqr(satellite.position->x) + Sqr(satellite.position->y));
+      e2 = __f*(2 - __f);
+      @geodetic.lat = AcTan(satellite.position->z,r);#radians
+
+      do
+      {
+        phi = @geodetic.lat;
+        c = 1/sqrt(1 - e2*Sqr(sin(phi)));
+        @geodetic.lat = AcTan(satellite.position->z + xkmper*c*e2*sin(phi),r);
+      }
+      while(fabs(@geodetic.lat - phi) >= 1E-10);
+
+      @geodetic.alt = r/cos(@geodetic.lat) - xkmper*c;#kilometers
+
+      if( @geodetic.lat > pio2 ) @geodetic.lat -= twopi;
+
+    } #Procedure Calculate_LatLonAlt
 
   end
 
