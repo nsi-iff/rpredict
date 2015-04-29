@@ -9,7 +9,7 @@ describe RPredict::OrbitTools  do
   let(:latitude) {21.40}
   let(:longitude) {-41.50}
   let(:altitude) {100.0}
-  let(:groundStation) { RPredict::GroundStation.new(latitude,longitude,altitude)}
+  let(:observer) { RPredict::Observer.new(latitude,longitude,altitude)}
 
   it 'Test geostationary' do
     expect(RPredict::OrbitTools.geostationary?(satellite)).to eq false
@@ -20,7 +20,7 @@ describe RPredict::OrbitTools  do
   end
 
   it 'Test has_AOS?' do
-    expect(RPredict::OrbitTools.has_AOS?(satellite,groundStation)).to eq true
+    expect(RPredict::OrbitTools.has_AOS?(satellite,observer)).to eq true
   end
 
 end

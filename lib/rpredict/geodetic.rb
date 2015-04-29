@@ -9,7 +9,7 @@ module RPredict
       @latitude = latitude
       @longitude = longitude
       @altitude = altitude
-      @dtime    = Time.new.to_i
+      @dtime    = DateTime.now
 
     end
 

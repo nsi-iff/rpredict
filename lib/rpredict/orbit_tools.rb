@@ -40,7 +40,7 @@ module RPredict
       end
     end
 
-    def has_AOS?(satellite, groundStation)
+    def has_AOS?(satellite, observer)
 
       if (satellite.meanmo != 0.0)
 
@@ -53,7 +53,7 @@ module RPredict
         apogee = sma * (1.0 + satellite.tle.eo) - RPredict::Norad::XKMPER
 
         if (Math::acos(RPredict::Norad::XKMPER/(apogee+RPredict::Norad::XKMPER))+
-            (lin)) > (RPredict::SGPMath.deg2rad(groundStation.geodetic.latitude).abs)
+            (lin)) > (RPredict::SGPMath.deg2rad(observer.geodetic.latitude).abs)
            return true
         end
       end

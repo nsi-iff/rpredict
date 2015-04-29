@@ -53,11 +53,16 @@ module RPredict
     end
 
     def julianday(year, mon, day, hr, minute, sec)
+      julianday_DateTime(DateTime.new(year, mon, day, hr, minute, sec))
+    end
+
+=begin
+    def julianday(year, mon, day, hr, minute, sec)
        (367.0 * year - ((7 * (year + ((mon + 9) / 12.0).floor)).floor * 0.25) +
        (275 * mon / 9.0).floor + day + 1721013.5 + ((sec / 60.0 + minute) /
         60.0 + hr) / 24.0)
     end
-
+=end
 
 
     def julianday_DateTime(cdate)
