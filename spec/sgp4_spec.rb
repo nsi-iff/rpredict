@@ -16,13 +16,13 @@ describe RPredict::SGPSDP  do
   end
 
   it 'Test SGP4' do
-    sat = RPredict::Norad.select_ephemeris(satellite)
+    satellite.select_ephemeris()
     expected.each do |t,x,y,z,vx,vy,vz|
 
 
-      sat = RPredict::SGPSDP.sgp4(sat,t)
-      sat.position, sat.velocity = RPredict::SGPMath.convert_Sat_State(sat.position, sat.velocity)
-      expect(sat.position.x).to eq x
+      satellite.localization(t)
+      satellite.position, satellite.velocity = RPredict::SGPMath.convert_Sat_State(satellite.position, satellite.velocity)
+      expect(satellite.position.x).to eq x
     end
   end
 

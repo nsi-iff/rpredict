@@ -11,10 +11,6 @@ module RPredict
       @position  =  RPredict::Norad.vector_t()
     end
 
-    def calc_ephemeris(satellite,time)
-
-    end
-
 
     def calculate(satellite,time=DateTime.now)
 
@@ -22,7 +18,7 @@ module RPredict
       @geodetic.altitude /= 1000.0
       @geodetic.theta = 0
 
-      satellite = RPredict::Norad.select_ephemeris(satellite)
+      satellite.select_ephemeris()
 
       jul_utc = time
       jul_epoch = RPredict::DateUtil.julian_Date_of_Epoch(satellite.tle.epoch)
@@ -30,20 +26,10 @@ module RPredict
       tsince = (jul_utc - jul_epoch) * RPredict::Norad::XMNPDA
       age = jul_utc - jul_epoch
 
-
-
       # call the norad routines according to the deep-space flag
+      satellite.localization(tsince)
 
-      if (satellite.flags & RPredict::Norad::DEEP_SPACE_EPHEM_FLAG) != 0
-          satellite = RPredict::SGPSDP.sdp4(satellite, tsince)
-      else
-          satellite = RPredict::SGPSDP.sgp4(satellite, tsince)
-      end
-
-      #p "X : #{satellite.position.x} Y: #{satellite.position.y}"
       RPredict::SGPMath.convert_Sat_State(satellite.position, satellite.velocity)
-
-      #p "X1: #{satellite.position.x} Y: #{satellite.position.y}"
 
       # get the velocity of the satellite
 
@@ -54,8 +40,6 @@ module RPredict
       satellite.ephemeris = calculate_Obs(jul_utc,satellite)
       calculate_LatLonAlt(jul_utc,satellite)
 
-
-
       while (satellite.geodetic.longitude < -Math::PI)
           satellite.geodetic.longitude += RPredict::Norad::TWOPI
       end
@@ -63,8 +47,6 @@ module RPredict
       while (satellite.geodetic.longitude > (Math::PI))
           satellite.geodetic.longitude -= RPredict::Norad::TWOPI
       end
-
-
       satellite.ephemeris.azimuth   = RPredict::SGPMath.rad2deg(satellite.ephemeris.azimuth)
       satellite.ephemeris.elevation = RPredict::SGPMath.rad2deg(satellite.ephemeris.elevation)
 
@@ -76,13 +58,8 @@ module RPredict
       # same formulas, but the one from predict is nicer
       #satellite.footprint = 2.0 * RPredict::Norad::XKMPER * acos (RPredict::Norad::XKMPER/satellite.position.w)
 
-      #p " az #{satellite.ephemeris.azimuth} el #{satellite.ephemeris.elevation} al #{satellite.geodetic.altitude}
-           #{RPredict::Norad::XKMPER / (RPredict::Norad::XKMPER+satellite.geodetic.altitude)}"
-
-      #satellite.footprint = 12756.33 * Math::acos(RPredict::Norad::XKMPER /
-      #                      (RPredict::Norad::XKMPER+satellite.geodetic.altitude))
-
-
+      satellite.footprint = 12756.33 * Math::acos(RPredict::Norad::XKMPER /
+                            (RPredict::Norad::XKMPER+satellite.geodetic.altitude))
 
       satellite.orbit = ((satellite.tle.xno * RPredict::Norad::XMNPDA /
                           RPredict::Norad::TWOPI + age * satellite.tle.bstar *

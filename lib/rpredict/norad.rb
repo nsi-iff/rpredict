@@ -153,43 +153,7 @@ module RPredict
                     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
     end
 
-    def select_ephemeris(satellite)
 
-      # Preprocess tle set
-
-      satellite.tle.xnodeo = RPredict::SGPMath.deg2rad(satellite.tle.xnodeo)
-      satellite.tle.omegao = RPredict::SGPMath.deg2rad(satellite.tle.omegao)
-      satellite.tle.xmo    = RPredict::SGPMath.deg2rad(satellite.tle.xmo)
-      satellite.tle.xincl  = RPredict::SGPMath.deg2rad(satellite.tle.xincl)
-
-      temp = TXX
-
-      # store mean motion beforersion
-      satellite.meanmo = satellite.tle.xno
-      satellite.tle.xno = satellite.tle.xno * temp * RPredict::Norad::XMNPDA
-      satellite.tle.xndt2o *= temp
-      satellite.tle.xndd6o = satellite.tle.xndd6o * temp / RPredict::Norad::XMNPDA
-      satellite.tle.bstar /= RPredict::Norad::AE
-
-      #Period > 225 minutes is deep space
-      dd1  =  (RPredict::Norad::XKE  / satellite.tle.xno)
-      a1   =  dd1**TOTHRD
-      r1   =  Math::cos(satellite.tle.xincl)
-      dd1  =  (1.0 - (satellite.tle.eo ** 2))
-      temp  =  CK2 * 1.5 * (r1 * r1 * 3.0 - 1.0) / (dd1**1.5)
-      del1  =  temp / (a1 * a1)
-      ao    =  a1 * (1.0 - del1 * (TOTHRD * 0.5 + del1 *
-             (del1 * 1.654320987654321 + 1.0)))
-
-      xnodp  =  satellite.tle.xno / ((temp / (ao * ao)) + 1.0)
-
-      if ((TWOPI / xnodp / XMNPDA) >=  0.15625)
-        satellite.flags |= DEEP_SPACE_EPHEM_FLAG
-      else
-        satellite.flags &= ~DEEP_SPACE_EPHEM_FLAG
-      end
-      satellite
-    end
 
     def isFlagClear(satellite,flag)
       if (~satellite.flags & flag) != 0

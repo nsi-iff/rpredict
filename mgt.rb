@@ -13,7 +13,7 @@ expected =[[0.0, 2328.97048951, -5995.22076416, 1719.97067261,2.91207230, -0.983
                    [ 1080.0,2663.09078980, -6115.48229980, 196.39640427,2.19611958, 0.65241995, -7.36282432],
                    [1440.0, 2742.55133057, -6079.67144775, -326.38095856,1.94850229, 1.21106251, -7.35619372]]
 
-satellite = RPredict::Norad.select_ephemeris(satellite)
+satellite.select_ephemeris()
 
 p "DEEP_SPACE_EPHEM: #{satellite.flags & RPredict::Norad::DEEP_SPACE_EPHEM_FLAG} (expected 0)"
 i=0
