@@ -70,6 +70,10 @@ module RPredict
       Vector.elements(vector1).inner_product(Vector.elements(vector2))
     end
 
+    def dot(vector1, vector2)
+       vector1.x*vector2.x + vector1.y*vector2.y + vector1.z*vector2.z
+    end
+
     def fmod(value1,value2)
         value1%value2
     end
@@ -82,19 +86,19 @@ module RPredict
 
       if(cosx == 0)
         if(sinx > 0)
-            return (RPredict::Norad::PIO2);
+            return (RPredict::Norad::PIO2)
         else
-            return (RPredict::Norad::X3PIO2);
+            return (RPredict::Norad::X3PIO2)
         end
       else
         if(cosx > 0)
           if(sinx > 0)
-             return ( Math::atan(sinx/cosx) );
+             return ( Math::atan(sinx/cosx) )
           else
-            return ( RPredict::Norad::TWOPI + Math::atan(sinx/cosx) );
+            return ( RPredict::Norad::TWOPI + Math::atan(sinx/cosx) )
           end
         else
-         return ( Math::PI + Math::atan(sinx/cosx) );
+         return ( Math::PI + Math::atan(sinx/cosx) )
         end
       end
     end
@@ -116,7 +120,7 @@ module RPredict
       v2.x = k * v1.x
       v2.y = k * v1.y
       v2.z = k * v1.z
-      v2.w = k.abs * v1.w;
+      v2.w = k.abs * v1.w
       v2
     end #Procedure Scalar_Multiply
 

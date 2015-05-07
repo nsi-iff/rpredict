@@ -201,12 +201,10 @@ module RPredict
       templ = satellite.sgps.t2cof * tsq
 
       if (~satellite.flags & RPredict::Norad::SIMPLE_FLAG) !=0
-
+        #p "Entrei"
         delomg = satellite.sgps.omgcof * tsince
         delm = satellite.sgps.xmcof * ( RPredict::SGPMath.pow(1 +
           satellite.sgps.eta* Math::cos(xmdf),3) - satellite.sgps.delmo)
-
-        #p satellite.sgps
 
         temp  = delomg+delm
         xmp   = xmdf+temp
@@ -224,12 +222,15 @@ module RPredict
 
       a = satellite.sgps.aodp * RPredict::SGPMath.pow(tempa,2)
 
+      #p "sat->tle.eo #{satellite.tle.eo} tempe #{tempe}"
+
       e = satellite.tle.eo-tempe
 
 
       xl = xmp+omega+xnode+satellite.sgps.xnodp*templ
-      #p "xl => #{xl} xmp => #{xmp} omega => #{omega} xnode => #{xnode}  templ => #{templ}"
 
+      #p "xl => #{xl} xmp => #{xmp} omega => #{omega} xnode => #{xnode}  templ => #{templ}"
+      #p "eeee   #{e}"
 
       beta = Math::sqrt(1.0 - e*e)
 
@@ -242,7 +243,7 @@ module RPredict
 
       xll = temp*satellite.sgps.xlcof*axn
 
-      #p "xll => #{xll} temp => #{temp} satellite.sgps.xlcof => #{satellite.sgps.xlcof} axn => #{axn}"
+      ##p "xll => #{xll} temp => #{temp} satellite.sgps.xlcof => #{satellite.sgps.xlcof} axn => #{axn}"
 
       aynl = temp*satellite.sgps.aycof
       xlt = xl+xll
@@ -254,7 +255,7 @@ module RPredict
       capu = RPredict::SGPMath.fMod2p(xlt-xnode)
       temp2 = capu
       i = 0
-      #p "temp2 #{temp2}"
+      ##p "temp2 #{temp2} #{xlt-xnode}"
       begin
 
         sinepw = Math::sin(temp2)
@@ -288,7 +289,7 @@ module RPredict
       cosu = temp2*(cosepw-axn+ayn*esine*temp3)
       sinu = temp2*(sinepw-ayn-axn*esine*temp3)
 
-      #p "sinu - #{sinu} temp2 - #{temp2} sinepw - #{sinepw} ayn - #{ayn} axn - #{axn} esine - #{esine} temp3 - #{temp3} "
+      ##p "sinu - #{sinu} temp2 - #{temp2} sinepw - #{sinepw} ayn - #{ayn} axn - #{axn} esine - #{esine} temp3 - #{temp3} "
 
       u = RPredict::SGPMath.acTan(sinu,cosu)
       sin2u = 2.0*sinu*cosu
@@ -324,7 +325,7 @@ module RPredict
       cosnok = Math::cos(xnodek)
       xmx = -sinnok*cosik
       xmy = cosnok*cosik
-      #p "#{xmx} * #{sinuk} + #{cosnok}* #{cosuk}"
+      #p "xmx #{xmx} * #{sinuk} + #{cosnok}* #{cosuk}"
       ux = xmx*sinuk+cosnok*cosuk
       uy = xmy*sinuk+sinnok*cosuk
       uz = sinik*sinuk
@@ -332,12 +333,15 @@ module RPredict
       vy = xmy*cosuk-sinnok*sinuk
       vz = sinik*cosuk
 
-      #p "ux #{ux} uy #{uy}"
+
 
       # Position and satellite.velocityocity
+      #p "rk #{rk} uX: #{ux} uY: #{uy}"
+      #p "X: #{satellite.position.x} Y: #{satellite.position.y}"
       satellite.position.x = rk*ux
       satellite.position.y = rk*uy
       satellite.position.z = rk*uz
+       #p "X: #{satellite.position.x} Y: #{satellite.position.y}"
       satellite.velocity.x = rdotk*ux+rfdotk*vx
       satellite.velocity.y = rdotk*uy+rfdotk*vy
       satellite.velocity.z = rdotk*uz+rfdotk*vz

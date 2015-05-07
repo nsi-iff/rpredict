@@ -4,6 +4,24 @@ module RPredict
   module DateUtil
     extend self
 
+    def currentDaynum()
+      #Interno UTC
+      #Hour UTC
+      (DateTime.parse(Time.now.utc.to_s).strftime('%Q').to_i - 315446400000) / 86400000.0
+    end
+
+    def currentDay()
+       julianday_DateTime(DateTime.parse(Time.now.utc.to_s))
+    end
+
+    def day(dateTime)
+       julianday_DateTime(DateTime.parse(Time.parse(dateTime).utc.to_s))
+    end
+
+    def daynum2Date(daynum)
+      DateTime.strptime(((daynum * 86400000.0 + 315446400000)/1000.0).to_s, '%s')
+    end
+
     def dayNum(month, day, year)
 
       if (month < 3)
@@ -44,30 +62,16 @@ module RPredict
 
       delta_et = 0.0
 
-      delta_et = 26.465 + 0.747622 * (year - 1950) + 1.886913 * Math::sin(TWOPI * (year - 1975) / 33)
+      delta_et = 26.465 + 0.747622 * (year - 1950) + 1.886913 * Math::sin(RPredict::Norad::TWOPI * (year - 1975) / 33)
       delta_et
     end
 
-    def currentDaynum()
-      (DateTime.now.strftime('%Q').to_i - 315446400000) / 86400000
-    end
-
     def julianday(year, mon, day, hr, minute, sec)
-      julianday_DateTime(DateTime.new(year, mon, day, hr, minute, sec))
+      julianday_DateTime(DateTime.parse(Time.new(year, mon, day, hr, minute, sec).utc.to_s))
     end
 
-=begin
-    def julianday(year, mon, day, hr, minute, sec)
-       (367.0 * year - ((7 * (year + ((mon + 9) / 12.0).floor)).floor * 0.25) +
-       (275 * mon / 9.0).floor + day + 1721013.5 + ((sec / 60.0 + minute) /
-        60.0 + hr) / 24.0)
-    end
-=end
-
-
-    def julianday_DateTime(cdate)
-      cdate.ajd.to_f
-      #julianday(cdate.year,cdate.mon,cdate.day,cdate.hour,cdate.min,cdate.sec)
+    def julianday_DateTime(dateTime)
+      dateTime.ajd.to_f
 
     end #Function Julian_Date
 
@@ -101,14 +105,15 @@ module RPredict
 
     def invjulianday_DateTime(jd)
       year, mon, day, hr, minute, sec = RPredict::DateUtil.invjulianday(jd)
-      DateTime.new(year, mon, day, hr, minute, sec)
+      DateTime.parse(Time.parse(DateTime.new(year, mon, day, hr, minute, sec).to_s).to_s)
+
     end
 
     def days2mdhms(year, days)
 
       lmonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
-      dayofyr = days.floor
+        dayofyr = days.floor
       #- - - - - - - - - - - - - - - - -find month and day of month - - - - - - - - - - - - - - - -* /
 
       if ((year % 4) == 0)
@@ -134,6 +139,8 @@ module RPredict
       return mon,day,hr,minute,sec
     end
 
+
+    ### julian_Date_of_Year+day <=> days2mdhms+julianDay
     def julian_Date_of_Year(year)
 
       # The function Julian_Date_of_Year calculates the Julian Date
@@ -149,8 +156,8 @@ module RPredict
       a    = i
       i    = a/4
       b    = 2-a+i
-      i    = 365.25*year
-      i    += 30.6001*14
+      i    = (365.25*year).to_i
+      i    += (30.6001*14).to_i
       i+1720994.5+b
 
     end
@@ -165,18 +172,14 @@ module RPredict
       # is changed, it is only valid for dates through 2056 December 31.
 
       year = epoch[0..1].to_i
-      day =  epoch[2..13].to_f
+      day  = epoch[2..-1].to_f
+      #p "year = #{year}  day #{day}"
+      #year = (epoch.to_f * 1E-3).to_i
+      #day = ((epoch.to_f * 1E-3) - year) * 1E3
+      #p "year = #{year}  day #{day}"
 
-      #year = parseInt(epoch * 1E-3)
-      #day = ((epoch * 1E-3) - year) * 1E3
+      julian_Date_of_Year(year < 57 ? year+2000:year+1900) + day
 
-      if (year < 57)
-        year = year + 2000
-      else
-        year = year + 1900
-      end
-
-      julian_Date_of_Year(year) + day
     end
 
     #Fraction_of_Day calculates the fraction of */
@@ -196,9 +199,10 @@ module RPredict
       jd = jd-ut
       tu = (jd-2451545.0)/36525
       gmst =24110.54841+tu*(8640184.812866+tu*(0.093104-tu*6.2E-6))
-      gmst = RPredict::SGPMath.modulus(gmst+SECDAY*omega_E*ut,SECDAY)
+      gmst = RPredict::SGPMath.modulus(gmst+RPredict::Norad::SECDAY*
+             RPredict::Norad::OMEGA_E*ut,RPredict::Norad::SECDAY)
 
-      (TWOPI*gmst/SECDAY)
+      RPredict::Norad::TWOPI*gmst/RPredict::Norad::SECDAY
     end
 
     def thetaG(epoch, deep_arg)
@@ -227,8 +231,8 @@ module RPredict
       jd   = julian_Date_of_Year(year) + day
       tu   = (jd - 2451545.0) / 36525
       gmst = 24110.54841 + tu * (8640184.812866 + tu * (0.093104 - tu * 6.2E-6))
-      gmst = (gmst + SECDAY * omega_E * ut)%SECDAY
-      ##LG thetaG = twopi * gmst / SECDAY
+      gmst = (gmst + RPredict::Norad::SECDAY * omega_E * ut)%RPredict::Norad::SECDAY
+      ##LG thetaG = twopi * gmst / RPredict::Norad::SECDAY
 
       deep_arg.ds50 = jd - 2433281.5 + ut
 

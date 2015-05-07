@@ -11,6 +11,89 @@ module RPredict
       @position  =  RPredict::Norad.vector_t()
     end
 
+    def calc_ephemeris(satellite,time)
+
+    end
+
+
+    def calculate(satellite,time=DateTime.now)
+
+      @geodetic.to_rad
+      @geodetic.altitude /= 1000.0
+      @geodetic.theta = 0
+
+      satellite = RPredict::Norad.select_ephemeris(satellite)
+
+      jul_utc = time
+      jul_epoch = RPredict::DateUtil.julian_Date_of_Epoch(satellite.tle.epoch)
+
+      tsince = (jul_utc - jul_epoch) * RPredict::Norad::XMNPDA
+      age = jul_utc - jul_epoch
+
+
+
+      # call the norad routines according to the deep-space flag
+
+      if (satellite.flags & RPredict::Norad::DEEP_SPACE_EPHEM_FLAG) != 0
+          satellite = RPredict::SGPSDP.sdp4(satellite, tsince)
+      else
+          satellite = RPredict::SGPSDP.sgp4(satellite, tsince)
+      end
+
+      #p "X : #{satellite.position.x} Y: #{satellite.position.y}"
+      RPredict::SGPMath.convert_Sat_State(satellite.position, satellite.velocity)
+
+      #p "X1: #{satellite.position.x} Y: #{satellite.position.y}"
+
+      # get the velocity of the satellite
+
+      satellite.velocity.w = RPredict::SGPMath.magnitude(satellite.velocity)
+
+      #satellite.velo = satellite.vel.w
+
+      satellite.ephemeris = calculate_Obs(jul_utc,satellite)
+      calculate_LatLonAlt(jul_utc,satellite)
+
+
+
+      while (satellite.geodetic.longitude < -Math::PI)
+          satellite.geodetic.longitude += RPredict::Norad::TWOPI
+      end
+
+      while (satellite.geodetic.longitude > (Math::PI))
+          satellite.geodetic.longitude -= RPredict::Norad::TWOPI
+      end
+
+
+      satellite.ephemeris.azimuth   = RPredict::SGPMath.rad2deg(satellite.ephemeris.azimuth)
+      satellite.ephemeris.elevation = RPredict::SGPMath.rad2deg(satellite.ephemeris.elevation)
+
+      satellite.ssplat = RPredict::SGPMath.rad2deg(satellite.geodetic.latitude)
+      satellite.ssplon = RPredict::SGPMath.rad2deg(satellite.geodetic.longitude)
+
+      satellite.phase = RPredict::SGPMath.rad2deg(satellite.phase)
+
+      # same formulas, but the one from predict is nicer
+      #satellite.footprint = 2.0 * RPredict::Norad::XKMPER * acos (RPredict::Norad::XKMPER/satellite.position.w)
+
+      #p " az #{satellite.ephemeris.azimuth} el #{satellite.ephemeris.elevation} al #{satellite.geodetic.altitude}
+           #{RPredict::Norad::XKMPER / (RPredict::Norad::XKMPER+satellite.geodetic.altitude)}"
+
+      #satellite.footprint = 12756.33 * Math::acos(RPredict::Norad::XKMPER /
+      #                      (RPredict::Norad::XKMPER+satellite.geodetic.altitude))
+
+
+
+      satellite.orbit = ((satellite.tle.xno * RPredict::Norad::XMNPDA /
+                          RPredict::Norad::TWOPI + age * satellite.tle.bstar *
+                          RPredict::Norad::AE) * age + satellite.tle.xmo /
+                          RPredict::Norad::TWOPI).floor + satellite.tle.revnum - 1
+
+      @geodetic.to_deg
+      @geodetic.altitude *= 1000.0
+
+    end
+
     def calculate_User_PosVel(time)
 
       # Calculate_User_PosVel() passes the user's @geodetic position
@@ -25,21 +108,21 @@ module RPredict
                         @geodetic.longitude)
 
 
-      c = 1 / Math::sqrt(1 + RPredict::Norad::F__ * (RPredict::Norad::F__ - 2) *
-          RPredict::SGPMath.sqr(Math::sin(@geodetic.latitude)))
+      factc = 1 / Math::sqrt(1 + RPredict::Norad::F__ * (RPredict::Norad::F__ - 2.0) *
+           (Math::sin(@geodetic.latitude) ** 2))
 
-      sq = RPredict::SGPMath.sqr(1 - RPredict::Norad::F__) * c
-      achcp = (RPredict::Norad::XKMPER * c + @geodetic.altitude) *
+      factsq = ((1 - RPredict::Norad::F__) ** 2) * factc
+      achcp = (RPredict::Norad::XKMPER * factc + @geodetic.altitude) *
                Math::cos(@geodetic.latitude)
 
       @position.x = achcp * Math::cos(@geodetic.theta) # kilometers
       @position.y = achcp * Math::sin(@geodetic.theta)
-      @position.z = (RPredict::Norad::XKMPER * sq + @geodetic.altitude) *
+      @position.z = (RPredict::Norad::XKMPER * factsq + @geodetic.altitude) *
                      Math::sin(@geodetic.latitude)
       @position.w = RPredict::SGPMath.magnitude(@position)
 
-      @velocity.x = -RPredict::Norad::MFACTOC * @position.y # kilometers/second
-      @velocity.y = RPredict::Norad::MFACTOC *  @position.x
+      @velocity.x = -RPredict::Norad::MFACTOR * @position.y # kilometers/second
+      @velocity.y = RPredict::Norad::MFACTOR *  @position.x
       @velocity.z = 0
       @velocity.w = RPredict::SGPMath.magnitude(@velocity)
     end
@@ -50,7 +133,7 @@ module RPredict
       # The procedures Calculate_Obs and Calculate_RADec calculate
       # the *topocentric* coordinates of the object with ECI position,
       # {posend, and velocity, {velend, from location {geodeticend at {timeend.
-      # The {obs_setend returned for Calculate_Obs consists of azimuth,
+      # The {satellite.ephemerisend returned for Calculate_Obs consists of azimuth,
       # elevation, range, and range rate (in that order) with units of
       # radians, radians, kilometers, and kilometers/second, respectively.
       # The WGS '72 geoid is used and the effect of atmospheric refraction
@@ -66,8 +149,8 @@ module RPredict
       #sin_lat, cos_lat, sin_theta, cos_theta, el, azim, top_s, top_e, top_z
 
 
-      range   = RPredict::SGPMath.vector_t()
-      rgvel   = RPredict::SGPMath.vector_t()
+      range   = RPredict::Norad.vector_t()
+      rgvel   = RPredict::Norad.vector_t()
 
       calculate_User_PosVel(time)
 
@@ -89,6 +172,7 @@ module RPredict
 
       sin_lat   = Math::sin(@geodetic.latitude)
       cos_lat   = Math::cos(@geodetic.latitude)
+
       sin_theta = Math::sin(@geodetic.theta)
       cos_theta = Math::cos(@geodetic.theta)
 
@@ -98,20 +182,22 @@ module RPredict
       top_e     = -sin_theta * range.x + cos_theta * range.y
       top_z     = cos_lat * cos_theta * range.x + cos_lat * sin_theta *
                   range.y + sin_lat * range.z
-      azim      = atan(-top_e / top_s) # Azimuth
+      azim      = Math::atan(-top_e / top_s) # Azimuth
 
       if (top_s > 0.0)
-        azim= azim + pi
+        azim += Math::PI
       end
 
       if (azim<0.0)
-        azim = azim + RPredict::Norad::TWOPI
+        azim += RPredict::Norad::TWOPI
       end
 
       el = Math::asin(top_z / range.w)
 
-      ephemeris = RPredict::Ephemeris.new(azim, el, range.w,
-                                       RPredict::SGPMath.vdot(range,rgvel)/range.w)
+      ephemeris = RPredict::Ephemeris.new(self, satellite, azim, el, range.w,
+                                       RPredict::SGPMath.dot(range,rgvel)/range.w,
+                                       time)
+
 
       #obs_set.x=azim  # Azimuth (radians)
       #obs_set.y=el    # Elevation (radians)
@@ -129,9 +215,9 @@ module RPredict
       #*** End bypass ***
 
       if (ephemeris.elevation >= 0.0)
-        RPredict::Norad::setFlag(VISIBLE_FLAG)
+        satellite = RPredict::Norad::setFlag(satellite, RPredict::Norad::VISIBLE_FLAG)
       else
-        RPredict::Norad::clearFlag(VISIBLE_FLAG)
+        satellite = RPredict::Norad::clearFlag(satellite,RPredict::Norad::VISIBLE_FLAG)
       end
       ephemeris
     end
@@ -153,9 +239,9 @@ module RPredict
       begin
 
         phi = satellite.geodetic.latitude
-        c = 1/MatH::sqrt(1 - e2 * RPredict::SGPMath.sqr(Math::sin(phi)))
+        c = 1/Math::sqrt(1 - e2 * RPredict::SGPMath.sqr(Math::sin(phi)))
         satellite.geodetic.latitude = RPredict::SGPMath.acTan(satellite.position.z +
-                                      RPredict::Norad::XKMPER * c * e2 * sin(phi),r)
+                                      RPredict::Norad::XKMPER * c * e2 * Math::sin(phi),r)
 
       end while((satellite.geodetic.latitude - phi).abs >= 1E-10)
 

@@ -3,7 +3,8 @@ module RPredict
     class Satellite
 
       attr_accessor :tle, :ephemeris, :geodetic, :sgps, :dps, :deep_arg,
-                    :flags, :phase, :position, :velocity, :meanmo
+                    :flags, :phase, :position, :velocity, :meanmo, :footprint,
+                    :orbit, :ssplat, :ssplon
 
       def initialize(name,line1,line2)
         @tle        = RPredict::Satellite::TLE.new(name,line1,line2)

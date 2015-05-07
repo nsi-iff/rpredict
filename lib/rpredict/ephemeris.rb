@@ -5,14 +5,14 @@ module RPredict
                   :satellite, :dateTime
 
      def initialize( observer,satellite, azimuth = 0.0,elevation = 0.0,
-                     range = 0.0,range_rate = 0.0)
+                     range = 0.0,range_rate = 0.0, dateTime = DateTime.now)
       @observer   = observer
       @satellite  = satellite
       @elevation  = elevation
       @azimuth    = azimuth
       @range      = range
       @range_rate = range_rate
-      @dateTime   = DateTime.now
+      @dateTime   = dateTime
      end
   end
 end

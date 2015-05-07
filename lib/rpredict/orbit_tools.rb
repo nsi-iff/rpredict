@@ -19,7 +19,7 @@ module RPredict
         time = RPredict::DateUtil.currentDaynum()
       end
 
-      satepoch = RPredict::DateUtil.dayNum(1, 0, satellite.year) + satellite.refepoch;
+      satepoch = RPredict::DateUtil.dayNum(1, 0, satellite.year) + satellite.refepoch
       #if (satepoch + ((16.666666 - PLib.sat[x].meanmo) /
       #    (10.0 * Math.abs(PLib.sat[x].drag))) < time)
 
@@ -45,11 +45,11 @@ module RPredict
       if (satellite.meanmo != 0.0)
 
         # xincl is already in RAD by select_ephemeris
-        lin = satellite.tle.xincl;
+        lin = satellite.tle.xincl
         if (lin >= RPredict::Norad::PIO2)
              lin = Math::PI - lin
         end
-        sma = 331.25 * Math::exp(Math::log(1440.0/satellite.meanmo) * (2.0/3.0));
+        sma = 331.25 * Math::exp(Math::log(1440.0/satellite.meanmo) * (2.0/3.0))
         apogee = sma * (1.0 + satellite.tle.eo) - RPredict::Norad::XKMPER
 
         if (Math::acos(RPredict::Norad::XKMPER/(apogee+RPredict::Norad::XKMPER))+
