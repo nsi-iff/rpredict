@@ -14,6 +14,7 @@ describe RPredict::Observer  do
   let(:elev) {-37.45844443113333}
   let(:aos) {2457156.6360872667}
   let(:los) {2457156.643304261}
+
   let(:satelliteEphem) {observer.calculate(satellite, daynum)}
 
    before(:each) do
@@ -44,6 +45,11 @@ describe RPredict::Observer  do
 
   it 'get calculate los' do
      expect(observer.find_LOS(satellite,daynum)).to eq los
+  end
+
+  it 'get calculate findPrevAOS' do
+     daypass = RPredict::DateUtil.day("2015-05-14 0:20:0")
+     expect(observer.findPrevAOS(satellite,daypass).round(2)).to eq aos.round(2)
   end
 
 end

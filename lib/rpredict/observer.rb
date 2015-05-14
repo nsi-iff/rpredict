@@ -108,6 +108,34 @@ module RPredict
       lostime
     end
 
+    #Find AOS time of current pass.
+    # param satellite The satellite to find AOS for.
+    # param start Start time, prefereably now.
+    # return The time of the previous AOS or 0.0 if the satellite has no AOS.
+    # This function can be used to find the AOS time in the past of the
+    # current pass.
+    #
+
+    def findPrevAOS(satellite, start)
+
+        aostime = start
+
+        satellite = calculate(satellite,start)
+
+        # check whether satellite has aos
+        if !RPredict::OrbitTools.geostationary?(satellite) &&
+         !RPredict::OrbitTools.decayed?(satellite,start) &&
+          RPredict::OrbitTools.has_AOS?(satellite, self)
+
+          while (satellite.ephemeris.elevation >= 0.0)
+              aostime -= 0.0005 # 45 sec
+              satellite = calculate(satellite,aostime)
+          end
+        else
+          aostime = 0.0
+        end
+        aostime
+    end
 
     def calculate(satellite,time)
 
@@ -324,5 +352,9 @@ module RPredict
       end
       #satellite
     end #Procedure Calculate_LatLonAlt
+
+
+
+
   end
 end
