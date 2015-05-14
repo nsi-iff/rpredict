@@ -94,10 +94,15 @@ module RPredict
 
     #Global variables for sharing data among functions...
 
-    #flags    =  0
     aostime  =  0.0
 
     TXX =  (TWOPI/XMNPDA/XMNPDA)
+
+    SAT_VIS_NONE     = 0,     # Unknown/undefined.
+    SAT_VIS_VISIBLE  = 1      # Visible.
+    SAT_VIS_DAYLIGHT = 2      # Satellite is in daylight.
+    SAT_VIS_ECLIPSED = 3      # Satellite is eclipsed.
+    SAT_VIS_NUM      = 4
 
     def vector_t(x=0,y=0,z=0,w=0)
       (Struct.new :x,:y,:z,:w).new x,y,z,w

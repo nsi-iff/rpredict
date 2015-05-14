@@ -4,22 +4,24 @@ module RPredict
   module DateUtil
     extend self
 
+    #Deprecate
     def currentDaynum()
       #Interno UTC
       #Hour UTC
       (DateTime.parse(Time.now.utc.to_s).strftime('%Q').to_i - 315446400000) / 86400000.0
     end
 
-    def currentDay()
+    #Deprecate
+    def daynum2Date(daynum)
+      DateTime.strptime(((daynum * 86400000.0 + 315446400000)/1000.0).to_s, '%s')
+    end
+
+    def currentDayTime()
        julianday_DateTime(DateTime.parse(Time.now.utc.to_s))
     end
 
     def day(dateTime)
        julianday_DateTime(DateTime.parse(Time.parse(dateTime).utc.to_s))
-    end
-
-    def daynum2Date(daynum)
-      DateTime.strptime(((daynum * 86400000.0 + 315446400000)/1000.0).to_s, '%s')
     end
 
     def dayNum(month, day, year)

@@ -12,17 +12,21 @@ module RPredict
         @dps        = RPredict::Norad.deep_static_t()
         @deep_arg   = RPredict::Norad.deep_arg_t()
         @flags      = 0
-        #@ephemeris = RPredict::Ephemeris.new
+
         @geodetic  = RPredict::Geodetic.new
         @velocity  =  RPredict::Norad.vector_t()
         @position  =  RPredict::Norad.vector_t()
+
       end
 
       def localization(tsince)
         if (@flags & RPredict::Norad::DEEP_SPACE_EPHEM_FLAG) != 0
+
             RPredict::SGPSDP.sdp4(self, tsince)
         else
+
             RPredict::SGPSDP.sgp4(self, tsince)
+
         end
       end
 
@@ -62,6 +66,10 @@ module RPredict
           @flags &= ~RPredict::Norad::DEEP_SPACE_EPHEM_FLAG
         end
 
+      end
+
+      def veloc
+        @velocity.w
       end
 
       def catnum

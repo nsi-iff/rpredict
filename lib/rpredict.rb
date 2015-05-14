@@ -11,5 +11,6 @@ module RPredict
   autoload :OrbitTools  , 'rpredict/orbit_tools'
   autoload :Observer, 'rpredict/observer'
   autoload :Ephemeris, 'rpredict/ephemeris'
+  autoload :SatellitePass, 'rpredict/satellite_pass'
 
 end

@@ -11,14 +11,109 @@ module RPredict
       @position  =  RPredict::Norad.vector_t()
     end
 
+    #param satellite  the satellite data.
+    #param start The time where calculation should start.
+    #param maxdt The upper time limit in days (30 day limit)
+    #return The time of the next AOS or 0.0 if the satellite has no AOS.
 
-    def calculate(satellite,time=DateTime.now)
+    def find_AOS (satellite, start, maxdt=30.0)
+
+      timeStart = start
+      aostime = 0.0
+
+      # make sure current satellite values are
+      #    in sync with the time
+      #
+
+      # check whether satelliteellite has aos #
+      if !RPredict::OrbitTools.geostationary?(satellite) &&
+         !RPredict::OrbitTools.decayed?(satellite) &&
+         RPredict::OrbitTools.has_AOS?(satellite, self)
+
+        satellite = calculate(satellite, start)
+
+        if (satellite.ephemeris.elevation > 0.0)
+           timeStart = find_LOS(satellite, start, maxdt) + 0.014 # +20 min
+        end
+
+        # invalid time (potentially returned by find_los) #
+        if (timeStart >= 0.1)
+
+          # update satelliteellite data #
+          satellite = calculate(satellite, timeStart)
+
+          # use upper time limit #
+          # coarse time steps #
+          while ((satellite.ephemeris.elevation < -1.0) && (timeStart <= (start + maxdt)))
+              timeStart -= 0.00035 * (satellite.ephemeris.elevation * ((satellite.geodetic.altitude / 8400.0) + 0.46) - 2.0)
+              satellite = calculate(satellite, timeStart)
+          end
+
+          # fine steps #
+          while ((aostime == 0.0) && (timeStart <= (start + maxdt)))
+
+              if ((satellite.ephemeris.elevation).abs < 0.005)
+                  aostime = timeStart
+              else
+                  timeStart -= satellite.ephemeris.elevation * Math::sqrt(satellite.geodetic.altitude) / 530000.0
+                  ephemeris  = calculate(satellite, timeStart)
+              end
+
+          end
+        end
+      end
+      aostime
+    end
+
+    def find_LOS (satellite, start, maxdt=30.0)
+
+      timeStart = start
+      lostime   = 0.0
+
+      # check whether satellite has aos
+      if !RPredict::OrbitTools.geostationary?(satellite) &&
+         !RPredict::OrbitTools.decayed?(satellite,timeStart) &&
+          RPredict::OrbitTools.has_AOS?(satellite, self)
+
+        satellite = calculate(satellite, start)
+
+        if (satellite.ephemeris.elevation < 0.0)
+            timeStart = find_AOS(satellite, start, maxdt) + 0.001 # +1.5 min
+        end
+        # invalid time (potentially returned by find_aos)
+        if (timeStart >= 0.01)
+
+          # update satelliteellite data
+          satellite = calculate(satellite, timeStart)
+
+          # use upper time limit
+
+          # coarse steps
+          while ((satellite.ephemeris.elevation >= 1.0) && (timeStart <= (start + maxdt)))
+              timeStart += Math::cos(RPredict::SGPMath.deg2rad(satellite.ephemeris.elevation - 1.0)) * Math::sqrt(satellite.geodetic.altitude) / 25000.0
+              satellite = calculate(satellite, timeStart)
+          end
+          # fine steps
+          while ((lostime == 0.0) && (timeStart <= (start + maxdt)))
+
+              timeStart += satellite.ephemeris.elevation * Math::sqrt(satellite.geodetic.altitude)/502500.0
+              satellite = calculate(satellite, timeStart)
+
+              if ((satellite.ephemeris.elevation).abs < 0.005)
+                  lostime = timeStart
+              end
+          end
+        end
+      end
+      lostime
+    end
+
+
+    def calculate(satellite,time)
 
       @geodetic.to_rad
       @geodetic.altitude /= 1000.0
       @geodetic.theta = 0
-
-      satellite.select_ephemeris()
 
       jul_utc = time
       jul_epoch = RPredict::DateUtil.julian_Date_of_Epoch(satellite.tle.epoch)
@@ -35,9 +130,7 @@ module RPredict
 
       satellite.velocity.w = RPredict::SGPMath.magnitude(satellite.velocity)
 
-      #satellite.velo = satellite.vel.w
-
-      satellite.ephemeris = calculate_Obs(jul_utc,satellite)
+      ephemeris = calculate_Obs(jul_utc,satellite)
       calculate_LatLonAlt(jul_utc,satellite)
 
       while (satellite.geodetic.longitude < -Math::PI)
@@ -47,8 +140,8 @@ module RPredict
       while (satellite.geodetic.longitude > (Math::PI))
           satellite.geodetic.longitude -= RPredict::Norad::TWOPI
       end
-      satellite.ephemeris.azimuth   = RPredict::SGPMath.rad2deg(satellite.ephemeris.azimuth)
-      satellite.ephemeris.elevation = RPredict::SGPMath.rad2deg(satellite.ephemeris.elevation)
+      ephemeris.azimuth   = RPredict::SGPMath.rad2deg(ephemeris.azimuth)
+      ephemeris.elevation = RPredict::SGPMath.rad2deg(ephemeris.elevation)
 
       satellite.ssplat = RPredict::SGPMath.rad2deg(satellite.geodetic.latitude)
       satellite.ssplon = RPredict::SGPMath.rad2deg(satellite.geodetic.longitude)
@@ -68,7 +161,8 @@ module RPredict
 
       @geodetic.to_deg
       @geodetic.altitude *= 1000.0
-
+      satellite.ephemeris = ephemeris
+      satellite
     end
 
     def calculate_User_PosVel(time)
@@ -109,8 +203,8 @@ module RPredict
 
       # The procedures Calculate_Obs and Calculate_RADec calculate
       # the *topocentric* coordinates of the object with ECI position,
-      # {posend, and velocity, {velend, from location {geodeticend at {timeend.
-      # The {satellite.ephemerisend returned for Calculate_Obs consists of azimuth,
+      # posend, and velocity, velend, from location {geodeticend at {timeend.
+      # The {ephemerisend returned for Calculate_Obs consists of azimuth,
       # elevation, range, and range rate (in that order) with units of
       # radians, radians, kilometers, and kilometers/second, respectively.
       # The WGS '72 geoid is used and the effect of atmospheric refraction
@@ -230,7 +324,5 @@ module RPredict
       end
       #satellite
     end #Procedure Calculate_LatLonAlt
-
   end
-
 end
