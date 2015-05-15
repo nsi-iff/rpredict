@@ -104,6 +104,10 @@ module RPredict
     SAT_VIS_ECLIPSED = 3      # Satellite is eclipsed.
     SAT_VIS_NUM      = 4
 
+    SAT_CFG_INT_PRED_RESOLUTION  = 10
+    SAT_CFG_INT_PRED_NUM_ENTRIES = 20
+    SAT_CFG_INT_PRED_MIN_EL      = 5
+
     def vector_t(x=0,y=0,z=0,w=0)
       (Struct.new :x,:y,:z,:w).new x,y,z,w
     end

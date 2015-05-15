@@ -13,9 +13,9 @@ module RPredict
         @deep_arg   = RPredict::Norad.deep_arg_t()
         @flags      = 0
 
-        @geodetic  = RPredict::Geodetic.new
-        @velocity  =  RPredict::Norad.vector_t()
-        @position  =  RPredict::Norad.vector_t()
+        @geodetic   = RPredict::Geodetic.new
+        @velocity   =  RPredict::Norad.vector_t()
+        @position   =  RPredict::Norad.vector_t()
 
       end
 
@@ -67,6 +67,38 @@ module RPredict
         end
 
       end
+
+      def calculate_LatLonAlt(time)
+
+        # Reference:  The 1992 Astronomical Almanac, page K12.
+
+        @geodetic.theta     = RPredict::SGPMath.acTan(@position.y,@position.x)#radians
+        @geodetic.longitude = RPredict::SGPMath.fMod2p(@geodetic.theta -
+                                      RPredict::DateUtil.thetaG_JD(time))#radians
+        r = Math::sqrt(RPredict::SGPMath.sqr(@position.x) +
+            RPredict::SGPMath.sqr(@position.y))
+
+        e2 = RPredict::Norad::F__*(2 - RPredict::Norad::F__)
+
+        @geodetic.latitude = RPredict::SGPMath.acTan(@position.z,r)#radians
+
+        begin
+
+          phi = @geodetic.latitude
+          c = 1/Math::sqrt(1 - e2 * RPredict::SGPMath.sqr(Math::sin(phi)))
+          @geodetic.latitude = RPredict::SGPMath.acTan(@position.z +
+                                        RPredict::Norad::XKMPER * c * e2 * Math::sin(phi),r)
+
+        end while((@geodetic.latitude - phi).abs >= 1E-10)
+
+        @geodetic.altitude = r/Math::cos(@geodetic.latitude) -
+                                  RPredict::Norad::XKMPER * c #kilometers
+
+        if(@geodetic.latitude > RPredict::Norad::PIO2 )
+           @geodetic.latitude -= RPredict::Norad::TWOPI
+        end
+        #satellite
+      end #Procedure Calculate_LatLonAlt
 
       def veloc
         @velocity.w

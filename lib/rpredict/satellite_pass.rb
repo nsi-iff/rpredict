@@ -1,18 +1,14 @@
 module RPredict
   class SatellitePass
 
-    attr_accessor :observer,:satellite,:startDTime,:stopDTime,
-                  :ephemerisAOS, :ephemerisTCA, :ephemerisLOS
+    attr_accessor :observer,:satelliteAOS, :satelliteTCA, :satelliteLOS
 
-     def initialize( observer,satellite,startDTime)
+    def initialize( observer,satelliteAOS,satelliteLOS)
 
-      @observer   = observer
-      @satellite  = satellite
-      @startDTime = startDTime
+      @observer      = observer
+      @satelliteAOS  = satelliteAOS
+      @satelliteLOS  = satelliteLOS
 
     end
-
-
-
   end
 end
