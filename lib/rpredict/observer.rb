@@ -43,14 +43,14 @@ module RPredict
 
           # use upper time limit #
           # coarse time steps #
-          while ((satellite.ephemeris.elevation < (elevationIni-1.0)) && (timeStart <= (start + maxdt)))
+          while ((satellite.ephemeris.elevation < (elevationIni - 1.0)) && (timeStart <= (start + maxdt)))
               timeStart -= 0.00035 * (satellite.ephemeris.elevation *
                            ((satellite.geodetic.altitude / 8400.0) + 0.46) - 2.0)
               satellite = calculate(satellite, timeStart)
           end
 
           # fine steps #
-          while ((satellite.ephemeris.elevation.abs >= (elevationIni+0.005)) && (timeStart <= (start + maxdt)))
+          while ((satellite.ephemeris.elevation.abs >= (elevationIni + 0.005)) && (timeStart <= (start + maxdt)))
             timeStart -= satellite.ephemeris.elevation * Math::sqrt(satellite.geodetic.altitude) / 530000.0
             satellite  = calculate(satellite, timeStart)
           end
@@ -59,7 +59,7 @@ module RPredict
       satellite
     end
 
-    def findLOS (satellite, start, maxdt=30.0)
+    def findLOS (satellite, start, maxdt=30.0, elevationIni = 0.0)
 
       timeStart = start
       satellite = calculate(satellite, start)
@@ -70,7 +70,7 @@ module RPredict
          !RPredict::OrbitTools.decayed?(satellite,timeStart) &&
           RPredict::OrbitTools.has_AOS?(satellite, self)
 
-        if (satellite.ephemeris.elevation < 0.0)
+        if (satellite.ephemeris.elevation < elevationIni)
             timeStart = (findAOS(satellite, start, maxdt)).ephemeris.dateTime + 0.001 # +1.5 min
         end
         # invalid time (potentially returned by findAOS)
@@ -82,12 +82,12 @@ module RPredict
           # use upper time limit
 
           # coarse steps
-          while ((satellite.ephemeris.elevation >= 1.0) && (timeStart <= (start + maxdt)))
+          while ((satellite.ephemeris.elevation >= (elevationIni + 1.0)) && (timeStart <= (start + maxdt)))
               timeStart += Math::cos(RPredict::SGPMath.deg2rad(satellite.ephemeris.elevation - 1.0)) * Math::sqrt(satellite.geodetic.altitude) / 25000.0
               satellite = calculate(satellite, timeStart)
           end
           # fine steps
-          while (((satellite.ephemeris.elevation).abs >= 0.005) && (timeStart <= (start + maxdt)))
+          while (((satellite.ephemeris.elevation).abs >= (elevationIni + 0.005)) && (timeStart <= (start + maxdt)))
 
               timeStart += satellite.ephemeris.elevation * Math::sqrt(satellite.geodetic.altitude)/502500.0
               satellite = calculate(satellite, timeStart)
