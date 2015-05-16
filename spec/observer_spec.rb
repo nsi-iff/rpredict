@@ -14,8 +14,11 @@ describe RPredict::Observer  do
   let(:elev) {-37.45844443113333}
   let(:aos) {2457156.6360872667}
   let(:los) {2457156.643304261}
+  let(:tca) {2457156.6397152296}
 
   let(:satelliteEphem) {observer.calculate(satellite, daynum)}
+  let(:satellitePass) { observer.getPass(satellite, daynum)}
+
 
    before(:each) do
     satellite.select_ephemeris()
@@ -51,6 +54,12 @@ describe RPredict::Observer  do
      daypass = RPredict::DateUtil.day("2015-05-14 0:20:0")
      sataos = observer.findPrevAOS(satellite,daypass)
      expect(sataos.ephemeris.dateTime.round(2)).to eq aos.round(2)
+  end
+
+  it 'get getPass' do
+     expect(satellitePass.satelliteAOS.ephemeris.dateTime).to eq aos
+     expect(satellitePass.satelliteLOS.ephemeris.dateTime).to eq los
+     expect(satellitePass.satelliteTCA.ephemeris.dateTime).to eq tca
   end
 
 end

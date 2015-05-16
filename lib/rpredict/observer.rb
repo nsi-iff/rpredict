@@ -19,6 +19,7 @@ module RPredict
     def findAOS(satellite, start, maxdt=30.0, elevationIni = 0.0)
 
       timeStart = start
+      satellite = satellite.clone
       satellite = calculate(satellite, start)
       satellite.ephemeris.dateTime = 0.0
 
@@ -62,6 +63,7 @@ module RPredict
     def findLOS (satellite, start, maxdt=30.0, elevationIni = 0.0)
 
       timeStart = start
+      satellite = satellite.clone
       satellite = calculate(satellite, start)
       satellite.ephemeris.dateTime = 0.0
 
@@ -105,9 +107,10 @@ module RPredict
     # current pass.
     #
 
-    def findPrevAOS(satellite, start)
+    def findPrevAOS(satellite, start, elevationIni = 0.0)
 
         aostime = start
+        satellite = satellite.clone
 
         satellite = calculate(satellite,start)
         satellite.ephemeris.dateTime = 0.0
@@ -117,7 +120,7 @@ module RPredict
          !RPredict::OrbitTools.decayed?(satellite,start) &&
           RPredict::OrbitTools.has_AOS?(satellite, self)
 
-          while (satellite.ephemeris.elevation >= 0.0)
+          while (satellite.ephemeris.elevation >= elevationIni)
               aostime -= 0.0005 # 45 sec
               satellite = calculate(satellite,aostime)
           end
@@ -293,173 +296,95 @@ module RPredict
       end
       ephemeris
     end
-=begin
-    def getPass   (satellite, start, maxdt)
 
 
-        tca  = 0.0    # time of TCA
-        #los  = 0.0    # time of LOS
-        dt   = 0.0    # time diff
-        step = 0.0    # time step
-        iter = 0      # number of iterations
-        t0   = start
-        done = false
+    def getPass(satellite, start, maxdt = 30.0)
 
-        tres = 0.0 # required time resolution
-        max_el = 0.0 # maximum elevation
-        satellitePass =
-        detail = NULL
+      max_el = 0.0 # maximum elevation
 
+      # FIXME: watchdog
+
+      # get time resolution satellite-cfg stores it in seconds
+
+      tres = RPredict::Norad::SAT_CFG_INT_PRED_RESOLUTION / 86400.0
+
+      # Find los of next pass or of current pass
 
 
-        # FIXME: watchdog
+      satelliteAOS = findAOS(satellite, start, maxdt)
 
-        # get time resolution satellite-cfg stores it in seconds
+      satelliteLOS = findLOS(satellite, start, maxdt) # See if a pass is ongoing
 
-        tres = RPredict::Norad::SAT_CFG_INT_PRED_RESOLUTION / 86400.0
+      satelliteTCA = satelliteAOS
 
-        # loop until we find a pass with elevation > SAT_CFG_INT_PRED_MIN_EL
-        #    or we run out of time
-        #    FIXME: we should have a safety break
 
-        while (!done)
 
-            # Find los of next pass or of current pass
-            satelliteLOS = findLOS(satellite, t0, maxdt) # See if a pass is ongoing
-            satelliteAOS = findAOS(satellite, t0, maxdt)
+      if (satelliteAOS.ephemeris.dateTime > satelliteLOS.ephemeris.dateTime)
+          # satelliteLOS.ephemeris.dateTime is from an currently happening pass, find previous satelliteAOS.ephemeris.dateTime
+          satelliteAOS = findPrevAOS(satellite, start)
+      end
 
-            if (satelliteAOS.ephemeris.dateTime > satelliteLOS.ephemeris.dateTime)
-                # satelliteLOS.ephemeris.dateTime is from an currently happening pass, find previous satelliteAOS.ephemeris.dateTime
-                satelliteAOS = findPrevAOS(satellite, t0)
-            end
+      # get time step, which will give us the max number of entries
 
-            # satelliteAOS.ephemeris.dateTime = 0.0 means no satelliteAOS.ephemeris.dateTime
-            if (satelliteAOS.ephemeris.dateTime == 0.0)
-                done = true
-                next
-            end
+      stepPass = (satelliteLOS.ephemeris.dateTime - satelliteAOS.ephemeris.dateTime) /
+                  RPredict::Norad::SAT_CFG_INT_PRED_NUM_ENTRIES
 
-            # check whether we are within time limits
-            # maxdt = 0 mean no time limit.
+      # but if this is smaller than the required resolution
+      #    we go with the resolution
 
-            else
-            if ((maxdt > 0.0) && (satelliteAOS.ephemeris.dateTime > (start + maxdt)) )
-                done = true
+      if (stepPass > tres)
+          stepPass = tres
+      end
 
-            else
+       # create a pass_t entry FIXME: g_try_new in 2.8
 
-                dt = satelliteLOS.ephemeris.dateTime - satelliteAOS.ephemeris.dateTime
+              # iterate over each time stepPass
+      maxTime = 0.0
+      (satelliteAOS.ephemeris.dateTime..satelliteLOS.ephemeris.dateTime).step(stepPass) do |timeStart|
 
-                # get time step, which will give us the max number of entries
+          satelliteTCA = calculate(satellite,timeStart)
 
-                step = dt / RPredict::Norad::SAT_CFG_INT_PRED_NUM_ENTRIES
-
-                # but if this is smaller than the required resolution
-                #    we go with the resolution
-
-                if (step < tres)
-                    step = tres
-                end
-
-                satelitePass = RPredict::SatellitePass.new(self,satelliteAOS,satelliteLOS)
-
-                # create a pass_t entry FIXME: g_try_new in 2.8
-
-                # iterate over each time step
-                for (t = pass->satelliteAOS.ephemeris.dateTime t <= pass->satelliteLOS.ephemeris.dateTime t += step)
-
-                    # calculate satelliteellite data
-                    satellite = calculate(satellite, satelliteAOS.ephemeris.dateTime)
-
-                    # in the first iter we want to store
-                    #    pass->satelliteAOS.ephemeris.dateTime_az
-
-                    if (t == pass->satelliteAOS.ephemeris.dateTime)
-                        pass->satelliteAOS.ephemeris.dateTime_az = satellite->az
-                        pass->orbit = satellite->orbit
-                    end
-
-                    # append details to satellite->details
-                    detail = g_new (pass_detail_t, 1)
-                    detail->time = t
-                    detail->pos.x = satellite->pos.x
-                    detail->pos.y = satellite->pos.y
-                    detail->pos.z = satellite->pos.z
-                    detail->pos.w = satellite->pos.w
-                    detail->vel.x = satellite->vel.x
-                    detail->vel.y = satellite->vel.y
-                    detail->vel.z = satellite->vel.z
-                    detail->vel.w = satellite->vel.w
-                    detail->velo = satellite->velo
-                    detail->az = satellite->az
-                    detail->el = satellite->el
-                    detail->range = satellite->range
-                    detail->range_rate = satellite->range_rate
-                    detail->lat = satellite->ssplat
-                    detail->lon = satellite->ssplon
-                    detail->alt = satellite->alt
-                    detail->ma = satellite->ma
-                    detail->phase = satellite->phase
-                    detail->footprint = satellite->footprint
-                    detail->orbit = satellite->orbit
-                    detail->vis = get_satellite_vis (satellite, qth, t)
-
-                    # also store visibility "bit"
-                    switch (detail->vis)
-                    case SAT_VIS_VISIBLE:
-                        pass->vis[0] = 'V'
-                        break
-                    case SAT_VIS_DAYLIGHT:
-                        pass->vis[1] = 'D'
-                        break
-                    case SAT_VIS_ECLIPSED:
-                        pass->vis[2] = 'E'
-                        break
-                    default:
-                        break
-                    end
-
-                    pass->details = g_slist_prepend (pass->details, detail)
-
-                    # store elevation if greater than the
-                        previously stored one
-
-                    if (satellite->el > max_el)
-                        max_el = satellite->el
-                        tca = t
-                        pass->maxel_az = satellite->az
-                    end
-
-                    #     g_print ("TIME: %f\tAZ: %f\tEL: %f (MAX: %f)\n",
-                    #           t, satellite->az, satellite->el, max_el)
-                end
-
-                pass->details = g_slist_reverse (pass->details)
-
-                # calculate satelliteellite data
-                satellite = calculate(satellite, pass->satelliteLOS.ephemeris.dateTime)
-                # store satelliteLOS.ephemeris.dateTime_az, max_el and tca
- satelliteAOS.ephemeris.dateTime              pass->satelliteLOS.ephemeris.dateTime_az = satellite->az
-                pass->max_el = max_el
-                p#ass->tca    = tca
-
-                # check whether this pass is good
-                if (max_el >= satellite_cfg_get_int (SAT_CFG_INT_PRED_MIN_EL))
-                    done = true
-                end
-                else
-                    done = FALSE
-                    t0 = satelliteLOS.ephemeris.dateTime + 0.014 // +20 min
-                    free_pass (pass)
-                    pass = NULL
-                end
-
-                iter++
+          if (satelliteTCA.ephemeris.elevation > max_el)
+            max_el = satelliteTCA.ephemeris.elevation
+            maxTime = timeStart
+          else
+            break
           end
-        end
+      end
 
-        return pass
+      # fine steps #
+      max_el = 0.0
+      (maxTime..(maxTime+stepPass)).step(0.00001) do |timeStart|
+        satelliteTCA  = calculate(satellite, timeStart)
+        if (satelliteTCA.ephemeris.elevation > max_el)
+            max_el = satelliteTCA.ephemeris.elevation
+            maxTime = timeStart
+        else
+            satelliteTCA  = calculate(satellite, maxTime)
+            break
+        end
+      end
+
+      RPredict::SatellitePass.new(self,satelliteAOS,satelliteLOS,satelliteTCA)
+
     end #getPass
-=end
+
   end
 end
+
+
+=begin
+            switch (detail->vis)
+            case SAT_VIS_VISIBLE:
+                pass->vis[0] = 'V'
+                break
+            case SAT_VIS_DAYLIGHT:
+                pass->vis[1] = 'D'
+                break
+            case SAT_VIS_ECLIPSED:
+                pass->vis[2] = 'E'
+                break
+            default:
+                break
+            end
+=end
