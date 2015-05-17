@@ -16,12 +16,14 @@ module RPredict
     #param maxdt The upper time limit in days (30 day limit)
     #return The time of the next AOS or 0.0 if the satellite has no AOS.
 
-    def findAOS(satellite, start, maxdt=30.0, elevationIni = 0.0)
+    def findAOS(satellite, start, maxdt=30.0)
 
       timeStart = start
       satellite = satellite.clone
-      satellite = calculate(satellite, start)
-      satellite.ephemeris.dateTime = 0.0
+
+      satellite, ephemeris = calculate(satellite, start)
+
+      #ephemeris.dateTime = 0.0
 
       # make sure current satellite values are
       #    in sync with the time
@@ -32,71 +34,72 @@ module RPredict
          !RPredict::OrbitTools.decayed?(satellite) &&
          RPredict::OrbitTools.has_AOS?(satellite, self)
 
-        if (satellite.ephemeris.elevation > elevationIni)
-           timeStart = (findLOS(satellite, start, maxdt)).ephemeris.dateTime + 0.014 # +20 min
+        if (ephemeris.elevation > 0.0)
+           timeStart = (findLOS(satellite, start, maxdt)).dateTime + 0.014 # +20 min
         end
 
         # invalid time (potentially returned by findLOS) #
         if (timeStart >= 0.1)
 
           # update satelliteellite data #
-          satellite = calculate(satellite, timeStart)
+          satellite, ephemeris = calculate(satellite, timeStart)
 
           # use upper time limit #
           # coarse time steps #
-          while ((satellite.ephemeris.elevation < (elevationIni - 1.0)) && (timeStart <= (start + maxdt)))
-              timeStart -= 0.00035 * (satellite.ephemeris.elevation *
+          while ((ephemeris.elevation < (-1.0)) && (timeStart <= (start + maxdt)))
+              timeStart -= 0.00035 * (ephemeris.elevation *
                            ((satellite.geodetic.altitude / 8400.0) + 0.46) - 2.0)
-              satellite = calculate(satellite, timeStart)
+              satellite, ephemeris = calculate(satellite, timeStart)
           end
 
           # fine steps #
-          while ((satellite.ephemeris.elevation.abs >= (elevationIni + 0.005)) && (timeStart <= (start + maxdt)))
-            timeStart -= satellite.ephemeris.elevation * Math::sqrt(satellite.geodetic.altitude) / 530000.0
-            satellite  = calculate(satellite, timeStart)
+          while ((ephemeris.elevation.abs >= (0.005)) && (timeStart <= (start + maxdt)))
+            timeStart -= ephemeris.elevation * Math::sqrt(satellite.geodetic.altitude) / 530000.0
+            satellite,ephemeris  = calculate(satellite, timeStart)
           end
         end
       end
-      satellite
+      ephemeris
     end
 
-    def findLOS (satellite, start, maxdt=30.0, elevationIni = 0.0)
+    def findLOS (satellite, start, maxdt=30.0 )
 
       timeStart = start
       satellite = satellite.clone
-      satellite = calculate(satellite, start)
-      satellite.ephemeris.dateTime = 0.0
+      satellite, ephemeris = calculate(satellite, start)
+
+      #ephemeris.dateTime = 0.0
 
       # check whether satellite has aos
       if !RPredict::OrbitTools.geostationary?(satellite) &&
          !RPredict::OrbitTools.decayed?(satellite,timeStart) &&
           RPredict::OrbitTools.has_AOS?(satellite, self)
 
-        if (satellite.ephemeris.elevation < elevationIni)
-            timeStart = (findAOS(satellite, start, maxdt)).ephemeris.dateTime + 0.001 # +1.5 min
+        if (ephemeris.elevation < 0.0)
+            timeStart = (findAOS(satellite, start, maxdt)).dateTime + 0.001 # +1.5 min
         end
         # invalid time (potentially returned by findAOS)
         if (timeStart >= 0.01)
 
           # update satelliteellite data
-          satellite = calculate(satellite, timeStart)
+          satellite, ephemeris = calculate(satellite, timeStart)
 
           # use upper time limit
 
           # coarse steps
-          while ((satellite.ephemeris.elevation >= (elevationIni + 1.0)) && (timeStart <= (start + maxdt)))
-              timeStart += Math::cos(RPredict::SGPMath.deg2rad(satellite.ephemeris.elevation - 1.0)) * Math::sqrt(satellite.geodetic.altitude) / 25000.0
-              satellite = calculate(satellite, timeStart)
+          while ((ephemeris.elevation >= (1.0)) && (timeStart <= (start + maxdt)))
+              timeStart += Math::cos(RPredict::SGPMath.deg2rad(ephemeris.elevation - 1.0)) * Math::sqrt(satellite.geodetic.altitude) / 25000.0
+              satellite, ephemeris = calculate(satellite, timeStart)
           end
           # fine steps
-          while (((satellite.ephemeris.elevation).abs >= (elevationIni + 0.005)) && (timeStart <= (start + maxdt)))
+          while (((ephemeris.elevation).abs >= (0.005)) && (timeStart <= (start + maxdt)))
 
-              timeStart += satellite.ephemeris.elevation * Math::sqrt(satellite.geodetic.altitude)/502500.0
-              satellite = calculate(satellite, timeStart)
+              timeStart += ephemeris.elevation * Math::sqrt(satellite.geodetic.altitude)/502500.0
+              satellite, ephemeris = calculate(satellite, timeStart)
           end
         end
       end
-      satellite
+      ephemeris
     end
 
     #Find AOS time of current pass.
@@ -107,25 +110,27 @@ module RPredict
     # current pass.
     #
 
-    def findPrevAOS(satellite, start, elevationIni = 0.0)
+    def findPrevAOS(satellite, start)
 
         aostime = start
         satellite = satellite.clone
 
-        satellite = calculate(satellite,start)
-        satellite.ephemeris.dateTime = 0.0
+        satellite, ephemeris = calculate(satellite,start)
+
 
         # check whether satellite has aos
         if !RPredict::OrbitTools.geostationary?(satellite) &&
          !RPredict::OrbitTools.decayed?(satellite,start) &&
           RPredict::OrbitTools.has_AOS?(satellite, self)
 
-          while (satellite.ephemeris.elevation >= elevationIni)
+          while (ephemeris.elevation >= 0.0)
               aostime -= 0.0005 # 45 sec
-              satellite = calculate(satellite,aostime)
+              satellite, ephemeris = calculate(satellite,aostime)
+
           end
         end
-        satellite
+
+        ephemeris
     end
 
     def calculate(satellite,time)
@@ -149,9 +154,9 @@ module RPredict
 
       satellite.velocity.w = RPredict::SGPMath.magnitude(satellite.velocity)
 
-      ephemeris = calculate_Obs(jul_utc,satellite)
-
       satellite.calculate_LatLonAlt(jul_utc)
+
+      ephemeris = calculate_Obs(jul_utc,satellite)
 
       while (satellite.geodetic.longitude < -Math::PI)
           satellite.geodetic.longitude += RPredict::Norad::TWOPI
@@ -160,11 +165,13 @@ module RPredict
       while (satellite.geodetic.longitude > (Math::PI))
           satellite.geodetic.longitude -= RPredict::Norad::TWOPI
       end
+
       ephemeris.azimuth   = RPredict::SGPMath.rad2deg(ephemeris.azimuth)
       ephemeris.elevation = RPredict::SGPMath.rad2deg(ephemeris.elevation)
+      ephemeris.geodeticSatellite = satellite.geodetic
 
-      satellite.ssplat = RPredict::SGPMath.rad2deg(satellite.geodetic.latitude)
-      satellite.ssplon = RPredict::SGPMath.rad2deg(satellite.geodetic.longitude)
+      #satellite.ssplat = RPredict::SGPMath.rad2deg(satellite.geodetic.latitude)
+      #satellite.ssplon = RPredict::SGPMath.rad2deg(satellite.geodetic.longitude)
 
       satellite.phase = RPredict::SGPMath.rad2deg(satellite.phase)
 
@@ -181,8 +188,8 @@ module RPredict
 
       @geodetic.to_deg
       @geodetic.altitude *= 1000.0
-      satellite.ephemeris = ephemeris
-      satellite
+      #satellite.ephemeris = ephemeris
+      return satellite, ephemeris
     end
 
     def calculate_User_PosVel(time)
@@ -311,22 +318,22 @@ module RPredict
       # Find los of next pass or of current pass
 
 
-      satelliteAOS = findAOS(satellite, start, maxdt)
+      ephemerisAOS = findAOS(satellite, start, maxdt)
 
-      satelliteLOS = findLOS(satellite, start, maxdt) # See if a pass is ongoing
+      ephemerisLOS = findLOS(satellite, start, maxdt) # See if a pass is ongoing
 
-      satelliteTCA = satelliteAOS
+      ephemerisTCA = ephemerisAOS
 
 
 
-      if (satelliteAOS.ephemeris.dateTime > satelliteLOS.ephemeris.dateTime)
-          # satelliteLOS.ephemeris.dateTime is from an currently happening pass, find previous satelliteAOS.ephemeris.dateTime
-          satelliteAOS = findPrevAOS(satellite, start)
+      if (ephemerisAOS.dateTime > ephemerisLOS.dateTime)
+          # ephemerisLOS.dateTime is from an currently happening pass, find previous ephemerisAOS.dateTime
+          ephemerisAOS = findPrevAOS(satellite, start)
       end
 
       # get time step, which will give us the max number of entries
 
-      stepPass = (satelliteLOS.ephemeris.dateTime - satelliteAOS.ephemeris.dateTime) /
+      stepPass = (ephemerisLOS.dateTime - ephemerisAOS.dateTime) /
                   RPredict::Norad::SAT_CFG_INT_PRED_NUM_ENTRIES
 
       # but if this is smaller than the required resolution
@@ -340,12 +347,12 @@ module RPredict
 
               # iterate over each time stepPass
       maxTime = 0.0
-      (satelliteAOS.ephemeris.dateTime..satelliteLOS.ephemeris.dateTime).step(stepPass) do |timeStart|
+      (ephemerisAOS.dateTime..ephemerisLOS.dateTime).step(stepPass) do |timeStart|
 
-          satelliteTCA = calculate(satellite,timeStart)
+          satellite, ephemerisTCA = calculate(satellite,timeStart)
 
-          if (satelliteTCA.ephemeris.elevation > max_el)
-            max_el = satelliteTCA.ephemeris.elevation
+          if (ephemerisTCA.elevation > max_el)
+            max_el = ephemerisTCA.elevation
             maxTime = timeStart
           else
             break
@@ -355,19 +362,23 @@ module RPredict
       # fine steps #
       max_el = 0.0
       (maxTime..(maxTime+stepPass)).step(0.00001) do |timeStart|
-        satelliteTCA  = calculate(satellite, timeStart)
-        if (satelliteTCA.ephemeris.elevation > max_el)
-            max_el = satelliteTCA.ephemeris.elevation
+        satellite, ephemerisTCA = calculate(satellite, timeStart)
+        if (ephemerisTCA.elevation > max_el)
+            max_el = ephemerisTCA.elevation
             maxTime = timeStart
         else
-            satelliteTCA  = calculate(satellite, maxTime)
+            satellite, ephemerisTCA = calculate(satellite, maxTime)
             break
         end
       end
 
-      RPredict::SatellitePass.new(self,satelliteAOS,satelliteLOS,satelliteTCA)
+      RPredict::SatellitePass.new(self,satellite,ephemerisAOS,ephemerisLOS,ephemerisTCA)
 
     end #getPass
+
+    def nextPass(satellite, timeStart)
+        findAOS(satellite, timeStart)
+    end
 
   end
 end

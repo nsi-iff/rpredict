@@ -16,7 +16,7 @@ describe RPredict::Observer  do
   let(:los) {2457156.643304261}
   let(:tca) {2457156.6397152296}
 
-  let(:satelliteEphem) {observer.calculate(satellite, daynum)}
+
   let(:satellitePass) { observer.getPass(satellite, daynum)}
 
 
@@ -37,29 +37,33 @@ describe RPredict::Observer  do
   end
 
   it 'get calculate Ephemeris' do
-
-    expect(satelliteEphem.ephemeris.azimuth).to eq azim
-    expect(satelliteEphem.ephemeris.elevation).to eq elev
+    sat, ephem = observer.calculate(satellite, daynum)
+    expect(ephem.azimuth).to eq azim
+    expect(ephem.elevation).to eq elev
   end
 
   it 'get calculate aos' do
-     expect((observer.findAOS(satellite,daynum)).ephemeris.dateTime).to eq aos
+     expect((observer.findAOS(satellite,daynum)).dateTime).to eq aos
   end
 
   it 'get calculate los' do
-     expect((observer.findLOS(satellite,daynum)).ephemeris.dateTime).to eq los
+     expect((observer.findLOS(satellite,daynum)).dateTime).to eq los
   end
 
   it 'get calculate findPrevAOS' do
      daypass = RPredict::DateUtil.day("2015-05-14 0:20:0")
-     sataos = observer.findPrevAOS(satellite,daypass)
-     expect(sataos.ephemeris.dateTime.round(2)).to eq aos.round(2)
+     ephemAOS = observer.findPrevAOS(satellite,daypass)
+     expect(ephemAOS.dateTime.round(2)).to eq aos.round(2)
   end
 
   it 'get getPass' do
-     expect(satellitePass.satelliteAOS.ephemeris.dateTime).to eq aos
-     expect(satellitePass.satelliteLOS.ephemeris.dateTime).to eq los
-     expect(satellitePass.satelliteTCA.ephemeris.dateTime).to eq tca
+     expect(satellitePass.ephemerisAOS.dateTime).to eq aos
+     expect(satellitePass.ephemerisLOS.dateTime).to eq los
+     expect(satellitePass.ephemerisTCA.dateTime).to eq tca
+  end
+  it 'get next pass' do
+     expect((observer.nextPass(satellite,daynum)).dateTime).to eq aos
+
   end
 
 end

@@ -1,14 +1,15 @@
 module RPredict
   class SatellitePass
 
-    attr_accessor :observer,:satelliteAOS, :satelliteTCA, :satelliteLOS
+    attr_accessor :observer,:satellite, :ephemerisAOS, :ephemerisTCA, :ephemerisLOS
 
-    def initialize( observer,satelliteAOS,satelliteLOS,satelliteTCA)
+    def initialize( observer,satellite,ephemerisAOS,ephemerisLOS,ephemerisTCA)
 
       @observer      = observer
-      @satelliteAOS  = satelliteAOS
-      @satelliteLOS  = satelliteLOS
-      @satelliteTCA  = satelliteTCA
+      @satellite     = satellite
+      @ephemerisAOS  = ephemerisAOS
+      @ephemerisLOS  = ephemerisLOS
+      @ephemerisTCA  = ephemerisTCA
 
     end
   end

@@ -36,17 +36,19 @@ p "+++++++++++++++++++++++++++++++++++++++++++++++++++++++"
 p "======================================================="
 =end
 daynow = RPredict::DateUtil.day("2015-05-14 0:0:0")# RPredict::DateUtil.currentDayTime()
+daypass = RPredict::DateUtil.day("2015-05-14 0:20:0")
 satellite.select_ephemeris()
 #satellite = observer.calculate(satellite, daynow)
-p "Proxima passada aos #{RPredict::DateUtil.invjulianday_DateTime((observer.findAOS(satellite,daynow)).ephemeris.dateTime)}"
-p "Proxima passada los #{RPredict::DateUtil.invjulianday_DateTime((observer.findLOS(satellite,daynow)).ephemeris.dateTime)}"
+p "Proxima passada aos #{RPredict::DateUtil.invjulianday_DateTime((observer.findAOS(satellite,daynow)).dateTime)}"
+p "Proxima passada los #{RPredict::DateUtil.invjulianday_DateTime((observer.findLOS(satellite,daynow)).dateTime)}"
+p "Proxima passada Pre #{RPredict::DateUtil.invjulianday_DateTime((observer.findPrevAOS(satellite,daypass)).dateTime)}"
 
 
 p '====================================================================================='
 satellitePass = observer.getPass(satellite, daynow)
 
-p "Proxima passada aos #{RPredict::DateUtil.invjulianday_DateTime(satellitePass.satelliteAOS.ephemeris.dateTime)}"
-p "Proxima passada tca #{RPredict::DateUtil.invjulianday_DateTime(satellitePass.satelliteTCA.ephemeris.dateTime)}"
-p "Proxima passada los #{RPredict::DateUtil.invjulianday_DateTime(satellitePass.satelliteLOS.ephemeris.dateTime)}"
+p "Proxima passada aos #{RPredict::DateUtil.invjulianday_DateTime(satellitePass.ephemerisAOS.dateTime)}"
+p "Proxima passada tca #{RPredict::DateUtil.invjulianday_DateTime(satellitePass.ephemerisTCA.dateTime)}"
+p "Proxima passada los #{RPredict::DateUtil.invjulianday_DateTime(satellitePass.ephemerisLOS.dateTime)}"
 
 

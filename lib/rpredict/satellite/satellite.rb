@@ -2,7 +2,7 @@ module RPredict
   module Satellite
     class Satellite
 
-      attr_accessor :tle, :ephemeris, :geodetic, :sgps, :dps, :deep_arg,
+      attr_accessor :tle, :geodetic, :sgps, :dps, :deep_arg,
                     :flags, :phase, :position, :velocity, :meanmo, :footprint,
                     :orbit, :ssplat, :ssplon
 
