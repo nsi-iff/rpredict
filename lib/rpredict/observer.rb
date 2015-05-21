@@ -46,16 +46,21 @@ module RPredict
 
           # use upper time limit #
           # coarse time steps #
-          while ((ephemeris.elevation < (-1.0)) && (timeStart <= (start + maxdt)))
+          while ((ephemeris.elevation < (0.0)) && (timeStart <= (start + maxdt)))
+
               timeStart -= 0.00035 * (ephemeris.elevation *
                            ((satellite.geodetic.altitude / 8400.0) + 0.46) - 2.0)
               satellite, ephemeris = calculate(satellite, timeStart)
+
           end
+
 
           # fine steps #
           while ((ephemeris.elevation.abs >= (0.005)) && (timeStart <= (start + maxdt)))
+
             timeStart -= ephemeris.elevation * Math::sqrt(satellite.geodetic.altitude) / 530000.0
             satellite,ephemeris  = calculate(satellite, timeStart)
+
           end
         end
       end
@@ -99,6 +104,7 @@ module RPredict
           end
         end
       end
+
       ephemeris
     end
 
@@ -142,7 +148,10 @@ module RPredict
       jul_utc = time
       jul_epoch = RPredict::DateUtil.julian_Date_of_Epoch(satellite.tle.epoch)
 
+      #p "jul_utc #{jul_utc} jul_epoch #{jul_epoch}"
+
       tsince = (jul_utc - jul_epoch) * RPredict::Norad::XMNPDA
+      #p "tsince #{tsince}"
       age = jul_utc - jul_epoch
 
       # call the norad routines according to the deep-space flag
@@ -346,15 +355,22 @@ module RPredict
        # create a pass_t entry FIXME: g_try_new in 2.8
 
               # iterate over each time stepPass
+
       maxTime = 0.0
+
+
       (ephemerisAOS.dateTime..ephemerisLOS.dateTime).step(stepPass) do |timeStart|
+
 
           satellite, ephemerisTCA = calculate(satellite,timeStart)
 
-          if (ephemerisTCA.elevation > max_el)
+
+
+          if (ephemerisTCA.elevation >= max_el)
             max_el = ephemerisTCA.elevation
             maxTime = timeStart
           else
+
             break
           end
       end
@@ -362,7 +378,9 @@ module RPredict
       # fine steps #
       max_el = 0.0
       (maxTime..(maxTime+stepPass)).step(0.00001) do |timeStart|
+
         satellite, ephemerisTCA = calculate(satellite, timeStart)
+
         if (ephemerisTCA.elevation > max_el)
             max_el = ephemerisTCA.elevation
             maxTime = timeStart

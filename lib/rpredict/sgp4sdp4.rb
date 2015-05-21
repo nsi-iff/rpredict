@@ -18,11 +18,15 @@ module RPredict
 
 
         satellite.flags |= RPredict::Norad::SGP4_INITIALIZED_FLAG
+        #p "Flag #{~satellite.flags}  #{RPredict::Norad::SGP4_INITIALIZED_FLAG}  #{~satellite.flags & RPredict::Norad::SGP4_INITIALIZED_FLAG}"
 
         # Recover original mean motion (satellite.sgps.xnodp) and
         # semimajor axis (satellite.sgps.aodp) from input elements.
 
         a1 = (RPredict::Norad::XKE/satellite.tle.xno)**RPredict::Norad::TOTHRD
+
+        #p "xno #{satellite.tle.xno}"
+
         satellite.sgps.cosio = Math::cos(satellite.tle.xincl)
         theta2 = satellite.sgps.cosio ** 2
         satellite.sgps.x3thm1 = 3 * theta2 - 1.0
@@ -32,6 +36,9 @@ module RPredict
         del1 = 1.5 * RPredict::Norad::CK2 * satellite.sgps.x3thm1 / (a1 * a1 * betao * betao2)
         ao = a1*(1.0-del1*(0.5*RPredict::Norad::TOTHRD+del1*(1.0+134.0/81.0*del1)))
         delo = 1.5*RPredict::Norad::CK2*satellite.sgps.x3thm1/(ao*ao*betao*betao2)
+
+        #p "ao #{ao}   delo #{delo}  a1 #{a1}  del1 #{del1}"
+
         satellite.sgps.xnodp = satellite.tle.xno/(1.0+delo)
         satellite.sgps.aodp = ao/(1.0-delo)
 
@@ -41,14 +48,17 @@ module RPredict
         # anomaly.  Also, the c3 term, the delta omega term, and
         # the delta m term are dropped.
 
+        #p "aodp #{satellite.sgps.aodp}  eo #{satellite.tle.eo}"
 
-        if ((satellite.sgps.aodp*(1.0-satellite.tle.eo)/RPredict::Norad::AE)<(220/
+        if ((satellite.sgps.aodp * (1.0-satellite.tle.eo)/RPredict::Norad::AE)<(220/
              RPredict::Norad::XKMPER+RPredict::Norad::AE))
+
             satellite.flags |= RPredict::Norad::SIMPLE_FLAG
+
         else
             satellite.flags &= ~RPredict::Norad::SIMPLE_FLAG
-        end
 
+        end
 
         # For perigees below 156 km, the
         # values of s and RPredict::Norad::QOMS2T are altered.
@@ -179,8 +189,6 @@ module RPredict
       # Update for secular gravity and atmospheric drag.
       xmdf   = satellite.tle.xmo   + satellite.sgps.xmdot   * tsince
 
-
-
       omgadf = satellite.tle.omegao + satellite.sgps.omgdot * tsince
 
       #p "xmdf => #{xmdf} satellite.tle.xmo => #{satellite.tle.xmo} satellite.sgps.xmdot => #{satellite.sgps.xmdot} tsince => #{tsince}"
@@ -199,6 +207,8 @@ module RPredict
       tempa = 1.0 - satellite.sgps.c1 * tsince
       tempe = satellite.tle.bstar * satellite.sgps.c4 * tsince
       templ = satellite.sgps.t2cof * tsq
+
+      #p "Flag #{~satellite.flags} #{RPredict::Norad::SIMPLE_FLAG}  #{~satellite.flags & RPredict::Norad::SIMPLE_FLAG}"
 
       if (~satellite.flags & RPredict::Norad::SIMPLE_FLAG) !=0
         #p "Entrei"

@@ -5,11 +5,6 @@ require 'rpredict'
 year = 2015
 days = 300
 
-p RPredict::DateUtil.julian_Date_of_Year(year) + days
-
-mon,day,hr,minute,sec = RPredict::DateUtil.days2mdhms(year,days)
-p RPredict::DateUtil.julianday(year,mon,day,hr,minute,sec)
-
 daynum = RPredict::DateUtil.day("2015-04-07 17:32:29")
 daynum2 = RPredict::DateUtil.day("2015-04-07 17:32:30")
 daynum10 = daynum + 0.000001

@@ -21,6 +21,7 @@ module RPredict
     end
 
     def day(dateTime)
+
        julianday_DateTime(DateTime.parse(Time.parse(dateTime).utc.to_s))
     end
 

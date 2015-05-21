@@ -1,69 +1,31 @@
 require 'rpredict'
 
-=begin
 
 name =  "ISS (ZARYA) "
-line1 =  "1 25544U 98067A   15107.19000354  .00020238  00000-0  29383-3 0  9999"
-line2 =  "2 25544  51.6475  28.7577 0005784 225.9745 219.7227 15.55776911938540"
-
-
+line1 =  "1 25544U 98067A   15119.57674883  .00015278  00000-0  21995-3 0  9997"
+line2 =  "2 25544  51.6470 326.8384 0005314 280.3312 119.8189 15.56237854940478"
 
 satellite =   RPredict::Satellite.new(name,line1,line2)
 
+latitude  = -21.7545
+longitude = -41.3244
+altitude  = 15.0
+observer  =  RPredict::Observer.new(latitude,longitude,altitude)
+#daynum = RPredict::DateUtil.julianday(2015,05,07,16,48,10)
+daynum = RPredict::DateUtil.day("2015-05-18 12:00:00")
+satellite.select_ephemeris()
 
-satellite = RPredict::Norad.select_ephemeris(satellite)
+outFile = File.new("../ephem18.txt","w")
+outFile.puts(" Data       Hora     Azimuth  Elevation \n")
+outFile.puts(" \n")
 
-
-daynum = (DateTime.new(2015,04,18,0,0,0).strftime('%Q').to_f-315446400000)/86400000
-jul_utc = daynum.to_f + 2444238.5
-jul_epoch = RPredict::DateUtil.julian_Date_of_Epoch(satellite.tle.epoch);
-
-t = (jul_utc - jul_epoch) * RPredict::Norad::XMNPDA
-
-p "DEEP_SPACE_EPHEM: #{satellite.flags & RPredict::Norad::DEEP_SPACE_EPHEM_FLAG} (expected 0)"
-i=0
-p "                           RESULT                EXPECTED                DELTA"
-p "--------------------------------------------------------------------------------------------"
-satellite = RPredict::SGPSDP.sgp4(satellite,t)
-satellite.position, satellite.velocity = RPredict::SGPMath.convert_Sat_State(satellite.position, satellite.velocity)
-
-p "STEP #{i+=1}  t: #{format("%6.1f",t)}  X: #{format("%14.8f",RPredict::SGPMath.rad2deg(satellite.position.x))}"
-
-p "                   Y: #{format("%14.8f",satellite.position.y)}"
-
-p "                   Z: #{format("%14.8f",satellite.position.z)}"
-
-p "                   VX: #{format("%14.8f",satellite.velocity.x)}"
-
-p "                   VY: #{format("%14.8f",satellite.velocity.y)}"
-
-p "                   VZ: #{format("%14.8f",satellite.velocity.z)}"
-=end
-
-
-t = DateTime.new(2015,04,28,14,03,20)
-p "Datetime  #{t}\n"
-
-jd1 = RPredict::DateUtil.julianday(2015,04,28,14,03,20)
-p "jd1 #{jd1}"
-p "Inverso jd1 #{RPredict::DateUtil.invjulianday(jd1)}\n"
-
-jd2 = RPredict::DateUtil.julianday_DateTime(t)
-p "jd2 #{jd2}"
-p "Inverso jd2 #{RPredict::DateUtil.invjulianday(jd2)}\n"
-
-jd3 = t.ajd.to_f
-p "jd3 = #{jd3}"
-p "Inverso jd3 #{RPredict::DateUtil.invjulianday(jd3)}"
-
-p "Inverso jd3 #{RPredict::DateUtil.invjulianday_DateTime(jd3)}"
-
-jd4 = RPredict::DateUtil.dayNum(04,28,2015)
-p "jd4 = #{jd4}"
-p "Inverso jd4 #{RPredict::DateUtil.invjulianday(jd4)}"
-
-p "Inverso jd4 #{RPredict::DateUtil.invjulianday_DateTime(jd4)}"
-
-
-
-
+  satellitePass = observer.getPass(satellite,daynum)
+  daynum = satellitePass.ephemerisAOS.dateTime
+  while daynum <= satellitePass.ephemerisLOS.dateTime
+    satellite, ephemeris = observer.calculate(satellite,daynum)
+    dia = RPredict::DateUtil.invjulianday_DateTime(ephemeris.dateTime).strftime("%Y-%m-%d %H:%M:%S")
+    outFile.puts("#{dia}  #{format("%4.1f",ephemeris.azimuth)}  #{format("%5.1f",ephemeris.elevation)}")
+    daynum +=  0.00001
+  end
+  outFile.puts(" \n")
+outFile.close()
