@@ -182,7 +182,7 @@ module RPredict
     end
 
 
-    ### julian_Date_of_Year+day <=> days2mdhms+julianDay
+
     def julian_Date_of_Year(year)
 
       # The function Julian_Date_of_Year calculates the Julian Date

@@ -6,7 +6,7 @@ module RPredict
                     :flags, :phase, :position, :velocity, :meanmo, :footprint,
                     :orbit, :ssplat, :ssplon
 
-      def initialize(name,line1,line2)
+      def initialize(name="",line1="",line2="")
         @tle        = RPredict::Satellite::TLE.new(name,line1,line2)
         @sgps       = RPredict::Norad.sgpsdp_static_t()
         @dps        = RPredict::Norad.deep_static_t()

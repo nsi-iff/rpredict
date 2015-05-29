@@ -4,7 +4,8 @@ module RPredict
 
       attr_accessor :name, :line1, :line2,:epoch, :xndt2o, :xndd6o, :xbstar,
                     :xincl, :xnodeo, :eo, :omegao, :xmo, :xno, :catnr, :elset,
-                    :revnum, :bstar, :omegao1, :xincl1, :xnodeo1
+                    :revnum, :bstar, :omegao1, :xincl1, :xnodeo1,
+                    :mfestart, :mfeend, :deltatime
 
 
       def initialize(name,line1,line2)

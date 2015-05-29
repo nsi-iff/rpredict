@@ -14,7 +14,7 @@ describe RPredict::Observer  do
   let(:elev) {-37.45844443113333}
   let(:aos) {2457156.6360872667}
   let(:los) {2457156.643304261}
-  let(:tca) {2457156.6397152296}
+  let(:tca) {2457156.639721526}
 
 
   let(:satellitePass) { observer.getPass(satellite, daynum)}
