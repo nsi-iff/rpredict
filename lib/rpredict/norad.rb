@@ -109,8 +109,8 @@ module RPredict
     SAT_CFG_INT_PRED_NUM_ENTRIES = 20
     SAT_CFG_INT_PRED_MIN_EL      = 5
 
-    def vector_t(x=0,y=0,z=0,w=0)
-      (Struct.new :x,:y,:z,:w).new x,y,z,w
+    def vector_t(x=0,y=0,z=0,w=0,t=0)
+      (Struct.new :x,:y,:z,:w,:t).new x,y,z,w,t
     end
 
     def obs_set_t(az=0,el=0,range=0,range_rate=0)

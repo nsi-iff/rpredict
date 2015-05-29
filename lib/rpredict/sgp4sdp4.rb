@@ -351,10 +351,12 @@ module RPredict
       satellite.position.x = rk*ux
       satellite.position.y = rk*uy
       satellite.position.z = rk*uz
+      satellite.position.t = tsince
        #p "X: #{satellite.position.x} Y: #{satellite.position.y}"
       satellite.velocity.x = rdotk*ux+rfdotk*vx
       satellite.velocity.y = rdotk*uy+rfdotk*vy
       satellite.velocity.z = rdotk*uz+rfdotk*vz
+      satellite.velocity.t = tsince
 
      # Phase in radians
       satellite.phase = xlt-xnode-omgadf+RPredict::Norad::TWOPI
@@ -648,13 +650,15 @@ module RPredict
       # Position and satellite.velocityocity
       # satellite.pos and satellite.velocity out ? ???????
 
-      satellite.pos.x = rk * ux
-      satellite.pos.y = rk * uy
-      satellite.pos.z = rk * uz
+      satellite.position.x = rk * ux
+      satellite.position.y = rk * uy
+      satellite.position.z = rk * uz
+      satellite.position.t = tsince
 
       satellite.velocity.x = rdotk * ux + rfdotk * vx
       satellite.velocity.y = rdotk * uy + rfdotk * vy
       satellite.velocity.z = rdotk * uz + rfdotk * vz
+      satellite.velocity.t = tsince
 
       # Phase in rads
       satellite.phase = xlt - satellite.deep_arg.xnode - satellite.deep_arg.omgadf + Rpredic::Norad::TWOPI
