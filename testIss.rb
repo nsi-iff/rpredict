@@ -25,7 +25,7 @@ outFile.puts(" \n")
     satellite, ephemeris = observer.calculate(satellite,daynum)
     dia = RPredict::DateUtil.invjulianday_DateTime(ephemeris.dateTime).strftime("%Y-%m-%d %H:%M:%S")
     outFile.puts("#{dia}  #{format("%4.1f",ephemeris.azimuth)}  #{format("%5.1f",ephemeris.elevation)}")
-    daynum +=  0.00001
+    daynum +=  RPredict::Norad::SECOND
   end
   outFile.puts(" \n")
 outFile.close()

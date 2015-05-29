@@ -28,7 +28,7 @@ module RPredict
       Math::sqrt((vector.x**2) + (vector.y**2) + (vector.z**2))
     end
 
-
+    #Returns argument rounded up to nearest integer */
 
     def pow(base,exponent)
       base**exponent

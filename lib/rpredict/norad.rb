@@ -77,6 +77,7 @@ module RPredict
     ROOT52   = 1.1428639E-7
     ROOT54   = 2.1765803E-9
     SECDAY   = 8.6400E4
+    SECOND   = 0.000011574
 
     THDT     = 4.3752691E-3
 

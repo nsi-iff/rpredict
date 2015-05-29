@@ -78,31 +78,84 @@ module RPredict
 
     end #Function Julian_Date
 
-    def invjulianday(jd)
+    #------------------------------------------------------------------
 
-      # - - - - - - - - - - - - - - -find year and days of the year - - - - - - - - - - - - - - -* /
-      temp    = jd - 2415019.5
-      tu      = temp / 365.25
-      year    = 1900 + (tu).floor
-      leapyrs = ((year - 1901) * 0.25).floor
+    # The function Calendar_Date converts a Julian Date to a struct tm.
+    # Only the members tm_year, tm_mon and tm_mday are calculated and set
 
-      #optional nudge by 8.64x10 - 7 sec to get even outputs
+    def date_of_jd(jd)
 
-      days = temp - ((year - 1900) * 365.0 + leapyrs) + 0.00000000001
+      # Astronomical Formulae for Calculators, Jean Meeus, pages 26-27
 
-      #* - - - - - - - - - - - -check for case of beginning of a year - - - - - - - - - - -* /
-      if (days < 1.0)
-          year    = year - 1
-          leapyrs = ((year - 1901) * 0.25).floor
-          days    = temp - ((year - 1900) * 365.0 + leapyrs)
+      factor = 0.5/RPredict::Norad::SECDAY/1000
+
+      value_f = RPredict::SGPMath.frac(jd + 0.5)
+
+      if (value_f + factor >= 1.0)
+        jd = jd + factor
+        value_f  = 0.0
+      end #if
+
+      value_z = jd.round
+
+      if( value_z < 2299161 )
+        value_a = value_z
+      else
+        alpha = ((value_z - 1867216.25)/36524.25).to_i
+        value_a = value_z + 1 + alpha - (alpha/4).to_i
+      end #else
+
+      value_b = value_a + 1524
+      value_c = ((value_b - 122.1)/365.25).to_i
+      value_d = (365.25 * value_c).to_i
+      value_e = ((value_b - value_d)/30.6001).to_i
+      day = value_b - value_d - (30.6001 * value_e).to_i + value_f
+
+      if( value_e < 13.5 )
+        month = (value_e - 1).to_i
+      else
+        month = (value_e - 13).to_i
       end
 
-      #- - - - - - - - - - - - - - - - -find remaing data - - - - - - - - - - - - - - - - - - - - - - - - -* /
+      if( month > 2.5 )
+        year = value_c - 4716
+      else
+        year = value_c - 4715
+      end
 
-      mon, day, hr, minute, sec = days2mdhms(year, days)
 
-      sec = sec - 0.00000086400
+      return year.to_i, month, day.floor.to_i
 
+    end #value_function Calendar_Date
+
+    def time_of_jd(jd)
+
+      _time = RPredict::SGPMath.frac(jd - 0.5)*RPredict::Norad::SECDAY;
+      _time = _time.round;
+      hr = (_time/3600.0).floor;
+      _time = _time - 3600.0*hr;
+      if( hr == 24 )
+         hr = 0
+      end
+      mn = (_time/60.0).floor;
+
+      sc = _time - 60.0*mn;
+
+      return hr,mn,sc
+
+    end #Time_of_Day
+
+    def ivjd(jd)
+       year, mon, day  = date_of_jd(jd)
+       hr, minute, sec = time_of_jd(jd)
+       DateTime.parse(Time.parse(DateTime.new(year, mon, day, hr, minute, sec).to_s).to_s)
+    end
+
+
+    def invjulianday(jd)
+
+      year, mon, day  = date_of_jd(jd)
+      hr, minute, sec = time_of_jd(jd)
       return year, mon, day, hr, minute, sec
     end
 
@@ -116,7 +169,7 @@ module RPredict
 
       lmonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
-        dayofyr = days.floor
+      dayofyr = days.floor
       #- - - - - - - - - - - - - - - - -find month and day of month - - - - - - - - - - - - - - - -* /
 
       if ((year % 4) == 0)
@@ -147,11 +200,11 @@ module RPredict
     def julian_Date_of_Year(year)
 
       # The function Julian_Date_of_Year calculates the Julian Date
-      # of Day 0.0 of {year}. This function is used to calculate the
+      # of Day 0.0 of year}. This function is used to calculate the
       # Julian Date of any date by using Julian_Date_of_Year, DOY,
-      # and Fraction_of_Day. */
+      # and Fraction_of_Day.
 
-      # Astronomical Formulae for Calculators, Jean Meeus,
+      # value_astronomical Formulae for Calculators, Jean Meeus,
       # pages 23-25. Calculate Julian Date of 0.0 Jan year
 
       year = year-1
@@ -185,12 +238,12 @@ module RPredict
 
     end
 
-    #Fraction_of_Day calculates the fraction of */
-    # a day passed at the specified input time.  */
+    #Fraction_of_Day calculates the fraction of
+    # a day passed at the specified input time.
     def fraction_of_Day(hr,mi,se)
 
       ( (hr + (mi + se/60.0)/60.0)/24.0 )
-    end #Function Fraction_of_Day*/
+    end #Function Fraction_of_Day
 
 
 
@@ -215,7 +268,7 @@ module RPredict
       # element sets. It has now been adapted for dates beyond the year
       # 1999, as described above. The function ThetaG_JD provides the
       # same calculation except that it is based on an input in the
-      # form of a Julian Date. */
+      # form of a Julian Date.
 
       # Reference:  The 1992 Astronomical Almanac, page B6.
 
