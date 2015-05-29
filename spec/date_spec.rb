@@ -26,7 +26,7 @@ describe RPredict::DateUtil  do
   end
 
   it 'Test InvJulianDay From DateTime' do
-    expect(RPredict::DateUtil.invjulianday_DateTime(jd).year).to eq dt.year
+    expect(RPredict::DateUtil.invjulianday(jd).year).to eq dt.year
   end
 
   it 'Test JulianDay From String' do
@@ -34,7 +34,7 @@ describe RPredict::DateUtil  do
   end
 
   it 'Test InvJulianDay From String' do
-    expect(RPredict::DateUtil.invjulianday(jd)[0]).to eq year
+    expect(RPredict::DateUtil.invjulianday(jd)).to eq dt
   end
 
   it 'Test Day' do

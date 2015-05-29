@@ -16,6 +16,9 @@ daynum = RPredict::DateUtil.day("2015-05-18 12:00:00")
 satellite.select_ephemeris()
 
 outFile = File.new("../ephem18.txt","w")
+hoje =  DateTime.now.strftime("%Y-%m-%d %H:%M:%S")
+outFile.puts(" Data : #{hoje}")
+outFile.puts(" \n")
 outFile.puts(" Data       Hora     Azimuth  Elevation \n")
 outFile.puts(" \n")
 
@@ -23,7 +26,7 @@ outFile.puts(" \n")
   daynum = satellitePass.ephemerisAOS.dateTime
   while daynum <= satellitePass.ephemerisLOS.dateTime
     satellite, ephemeris = observer.calculate(satellite,daynum)
-    dia = RPredict::DateUtil.invjulianday_DateTime(ephemeris.dateTime).strftime("%Y-%m-%d %H:%M:%S")
+    dia = RPredict::DateUtil.invjulianday(ephemeris.dateTime).strftime("%Y-%m-%d %H:%M:%S")
     outFile.puts("#{dia}  #{format("%4.1f",ephemeris.azimuth)}  #{format("%5.1f",ephemeris.elevation)}")
     daynum +=  RPredict::Norad::SECOND
   end

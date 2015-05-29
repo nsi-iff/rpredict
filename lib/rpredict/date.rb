@@ -145,24 +145,10 @@ module RPredict
 
     end #Time_of_Day
 
-    def ivjd(jd)
+    def invjulianday(jd)
        year, mon, day  = date_of_jd(jd)
        hr, minute, sec = time_of_jd(jd)
        DateTime.parse(Time.parse(DateTime.new(year, mon, day, hr, minute, sec).to_s).to_s)
-    end
-
-
-    def invjulianday(jd)
-
-      year, mon, day  = date_of_jd(jd)
-      hr, minute, sec = time_of_jd(jd)
-      return year, mon, day, hr, minute, sec
-    end
-
-    def invjulianday_DateTime(jd)
-      year, mon, day, hr, minute, sec = RPredict::DateUtil.invjulianday(jd)
-      DateTime.parse(Time.parse(DateTime.new(year, mon, day, hr, minute, sec).to_s).to_s)
-
     end
 
     def days2mdhms(year, days)

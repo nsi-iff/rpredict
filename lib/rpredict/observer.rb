@@ -46,7 +46,7 @@ module RPredict
 
           # use upper time limit #
           # coarse time steps #
-          while ((ephemeris.elevation < (0.0)) && (timeStart <= (start + maxdt)))
+          while ((ephemeris.elevation < (-1.0)) && (timeStart <= (start + maxdt)))
 
               timeStart -= 0.00035 * (ephemeris.elevation *
                            ((satellite.geodetic.altitude / 8400.0) + 0.46) - 2.0)
@@ -54,12 +54,16 @@ module RPredict
 
           end
 
-
+          i = 0
           # fine steps #
-          while ((ephemeris.elevation.abs >= (0.005)) && (timeStart <= (start + maxdt)))
+          while ((ephemeris.elevation >= (0.005)) && (timeStart <= (start + maxdt)))
 
-            timeStart -= ephemeris.elevation * Math::sqrt(satellite.geodetic.altitude) / 530000.0
+            timeStart -=  ephemeris.elevation * Math::sqrt(satellite.geodetic.altitude) / 530000.0
+
             satellite,ephemeris  = calculate(satellite, timeStart)
+
+
+
 
           end
         end
@@ -359,6 +363,7 @@ module RPredict
       maxTime = 0.0
 
 
+
       (ephemerisAOS.dateTime..ephemerisLOS.dateTime).step(stepPass) do |timeStart|
 
 
@@ -377,9 +382,10 @@ module RPredict
 
       # fine steps #
       max_el = 0.0
-      (maxTime..(maxTime+stepPass)).step(0.00001) do |timeStart|
+      (maxTime..(maxTime+stepPass)).step(RPredict::Norad::SECOND) do |timeStart|
 
         satellite, ephemerisTCA = calculate(satellite, timeStart)
+
 
         if (ephemerisTCA.elevation > max_el)
             max_el = ephemerisTCA.elevation
@@ -400,20 +406,3 @@ module RPredict
 
   end
 end
-
-
-=begin
-            switch (detail->vis)
-            case SAT_VIS_VISIBLE:
-                pass->vis[0] = 'V'
-                break
-            case SAT_VIS_DAYLIGHT:
-                pass->vis[1] = 'D'
-                break
-            case SAT_VIS_ECLIPSED:
-                pass->vis[2] = 'E'
-                break
-            default:
-                break
-            end
-=end
