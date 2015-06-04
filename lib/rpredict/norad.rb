@@ -54,6 +54,8 @@ module RPredict
     ZNS      = 1.19459E-5
     C1SS     = 2.9864797E-6
     ZES      = 1.675E-2
+    ZNL      = 1.5835218E-4
+    ZEL      = 5.490E-2
 
     ZCOSIS   = 9.1744867E-1
     ZSINIS   = 3.9785416E-1

@@ -62,8 +62,10 @@ module RPredict
 
         if ((RPredict::Norad::TWOPI / xnodp / RPredict::Norad::XMNPDA) >=  0.15625)
           @flags |= RPredict::Norad::DEEP_SPACE_EPHEM_FLAG
+
         else
           @flags &= ~RPredict::Norad::DEEP_SPACE_EPHEM_FLAG
+
         end
 
       end

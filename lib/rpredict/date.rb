@@ -215,10 +215,7 @@ module RPredict
 
       year = epoch[0..1].to_i
       day  = epoch[2..-1].to_f
-      #p "year = #{year}  day #{day}"
-      #year = (epoch.to_f * 1E-3).to_i
-      #day = ((epoch.to_f * 1E-3) - year) * 1E3
-      #p "year = #{year}  day #{day}"
+
 
       julian_Date_of_Year(year < 57 ? year+2000:year+1900) + day
 
@@ -259,8 +256,8 @@ module RPredict
       # Reference:  The 1992 Astronomical Almanac, page B6.
 
 
-      year = (epoch * 1E-3).to_i
-      day  = ((epoch * 1E-3) - year) * 1E3
+      year = epoch[0..1].to_i
+      day  = epoch[2..-1].to_f
 
       if (year < 57)
         year += 2000
@@ -273,7 +270,7 @@ module RPredict
       jd   = julian_Date_of_Year(year) + day
       tu   = (jd - 2451545.0) / 36525
       gmst = 24110.54841 + tu * (8640184.812866 + tu * (0.093104 - tu * 6.2E-6))
-      gmst = (gmst + RPredict::Norad::SECDAY * omega_E * ut)%RPredict::Norad::SECDAY
+      gmst = (gmst + RPredict::Norad::SECDAY * RPredict::Norad::OMEGA_E * ut)%RPredict::Norad::SECDAY
       ##LG thetaG = twopi * gmst / RPredict::Norad::SECDAY
 
       deep_arg.ds50 = jd - 2433281.5 + ut

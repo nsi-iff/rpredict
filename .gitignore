@@ -27,3 +27,5 @@ tmp
 *.a
 mkmf.log
 .rspec
+*.txt
+test*.rb
