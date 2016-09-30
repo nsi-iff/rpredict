@@ -11,5 +11,6 @@ module RPredict
   autoload :Observer, 'rpredict/observer'
   autoload :Ephemeris, 'rpredict/ephemeris'
   autoload :SatellitePass, 'rpredict/satellite_pass'
+  autoload :Exceptions, 'rpredict/exceptions'
 
 end
