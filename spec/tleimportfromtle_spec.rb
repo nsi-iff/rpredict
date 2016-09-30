@@ -7,6 +7,7 @@ describe RPredict::Satellite::TLEImportFromFile  do
 
   it 'get Size File TLE  ' do
     expect(tleFile.import_TLE().size).to eq 33
+    
   end
 
 end

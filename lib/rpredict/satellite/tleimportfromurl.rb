@@ -1,8 +1,9 @@
+require 'open-uri'
 module RPredict
   module Satellite
-    class TLEImportFromFile < TLEImport
+    class TLEImportFromURL < TLEImport
 
-      def initialize(sourse)
+      def initialize(source)
         super
       end
       def import_TLE()
